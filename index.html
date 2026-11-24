@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>30분 청크 루틴 트래커</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #273549;
+    --border: #334155;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --primary-soft: rgba(59, 130, 246, 0.18);
+    --accent: #f59e0b;
+    --accent-soft: rgba(245, 158, 11, 0.18);
+    --success: #10b981;
+    --postit: #fef08a;
+    --postit-text: #1e293b;
+    --slot-h: 44px; /* 30분당 기준 높이 */
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* 비전보드 스플래시 */
+  #vision-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #090d16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+  }
+  #vision-splash.hidden { opacity: 0; pointer-events: none; }
+  #vision-splash img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 16px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  #vision-splash .vision-quote {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #f8fafc;
+    white-space: pre-line;
+    max-width: 520px;
+  }
+  #vision-splash .skip-hint {
+    position: absolute;
+    bottom: 24px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* 상단 고정 헤더 */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 9px 12px;
+    flex-shrink: 0;
+    z-index: 20;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .date-nav button {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .date-title {
+    font-weight: 700;
+    font-size: 0.96rem;
+    cursor: pointer;
+    padding: 3px 4px;
+    white-space: nowrap;
+  }
+  .today-badge {
+    font-size: 0.68rem;
+    background: var(--primary);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 99px;
+    margin-left: 3px;
+    vertical-align: middle;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .icon-btn {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .icon-btn.active-mode {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+  .icon-btn.postit-btn {
+    background: var(--postit);
+    color: var(--postit-text);
+    border-color: #eab308;
+  }
+  .badge-count {
+    background: #ef4444;
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 99px;
+  }
+
+  /* 요약 및 수면 상태 바 */
+  .summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    gap: 8px;
+  }
+  .progress-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--success);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .sleep-banner {
+    margin-top: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.76rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #cbd5e1;
+  }
+  .sleep-time-link {
+    color: #93c5fd;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  /* 메인 타임라인 스크롤 영역 */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px 96px;
+    scroll-behavior: smooth;
+  }
+
+  .edit-mode-banner {
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* 1:1 비례 청크 카드 */
+  .chunk-wrapper {
+    margin-bottom: 5px;
+  }
+  .chunk-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 11px 7px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: opacity 0.2s, border-color 0.2s;
+    overflow: hidden;
+  }
+  /* 좌측 30분 단위 눈금 바 */
+  .slot-ticks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    display: flex;
+    flex-direction: column;
+  }
+  .slot-tick-seg {
+    flex: 1;
+    background: #475569;
+    border-bottom: 1px solid var(--bg);
+  }
+  .slot-tick-seg:last-child { border-bottom: none; }
+  .chunk-card.is-tracked .slot-tick-seg { background: var(--primary); }
+  .chunk-card.one-off .slot-tick-seg { background: var(--accent); }
+  .chunk-card.completed .slot-tick-seg { background: var(--success); }
+
+  /* 1시간 이상 긴 블록은 상단-중앙 정렬로 시원하게 표시 */
+  .chunk-card.tall {
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  .chunk-card.tall .chunk-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+  .chunk-card.tall .chunk-title {
+    font-size: 1.02rem;
+    margin: auto 0;
+  }
+
+  .chunk-card.past { opacity: 0.42; }
+  .chunk-card.current {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+    background: var(--surface-2);
+  }
+  .chunk-card.one-off {
+    border-color: rgba(245, 158, 11, 0.65);
+    background: linear-gradient(90deg, var(--accent-soft) 0%, var(--surface) 40%);
+  }
+  .chunk-card.completed {
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+  .chunk-card.completed .chunk-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  .chunk-card.untracked {
+    background: rgba(30, 41, 59, 0.55);
+  }
+
+  /* 빈 시간(공백) 1:1 블록 */
+  .gap-card {
+    border: 1px dashed #334155;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 0.76rem;
+    background: rgba(15, 23, 42, 0.4);
+  }
+
+  .chunk-info {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .chunk-time {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .tag-pill {
+    font-size: 0.66rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .tag-oneoff { background: var(--accent); color: #111827; }
+  .tag-now { background: var(--primary); color: white; }
+  .tag-duration { background: var(--bg); color: var(--text-muted); }
+  .tag-memo-dot { background: rgba(147, 197, 253, 0.2); color: #93c5fd; }
+
+  .chunk-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: keep-all;
+    margin-top: 2px;
+  }
+
+  .chunk-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .check-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 2px solid #64748b;
+    background: transparent;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .check-circle.checked {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  /* 편집 모드 버튼들 */
+  .track-toggle-btn {
+    padding: 5px 8px;
+    border-radius: 7px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  .track-toggle-btn.on {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+  .mini-edit-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 5px 7px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  /* 카드 터치 시 열리는 한 줄 세부 메모 */
+  .inline-memo-box {
+    display: none;
+    background: #162033;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 7px 10px;
+    margin-top: -4px;
+  }
+  .inline-memo-box.open { display: flex; gap: 6px; align-items: center; }
+  .inline-memo-box input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text);
+    font-size: 0.82rem;
+  }
+
+  /* 일기 섹션 */
+  .diary-box {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px;
+  }
+  .diary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+  .diary-status { font-size: 0.74rem; color: var(--success); }
+  textarea.diary-input {
+    width: 100%;
+    min-height: 88px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  /* 하단 플로팅 액션 바 */
+  .bottom-bar {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 15;
+    background: rgba(15, 23, 42, 0.94);
+    padding: 6px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+    max-width: 96vw;
+  }
+  .fab-btn {
+    border: none;
+    border-radius: 99px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .fab-oneoff { background: var(--accent); color: #111827; }
+  .fab-sleep { background: #312e81; color: #e0e7ff; border: 1px solid #4f46e5; }
+  .fab-wake { background: #065f46; color: #d1fae5; border: 1px solid #10b981; }
+  .fab-diary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+  /* 모달 공통 */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.68);
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    width: 100%;
+    max-width: 540px;
+    max-height: 88dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 16px 16px 24px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
+  @media (min-width: 600px) {
+    .modal-backdrop { align-items: center; padding: 16px; }
+    .modal-sheet { border-radius: 16px; }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .modal-title { font-size: 1.02rem; font-weight: 700; }
+  .close-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+
+  /* 30분 단위 드럼 스크롤 피커 */
+  .wheel-picker-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .wheel-col label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .wheel-box {
+    position: relative;
+    height: 132px; /* 3개 항목 노출 (44px * 3) */
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .wheel-box::-webkit-scrollbar { display: none; }
+  .wheel-highlight {
+    position: absolute;
+    left: 0; right: 0;
+    top: 44px; height: 44px;
+    background: var(--primary-soft);
+    border-top: 1px solid var(--primary);
+    border-bottom: 1px solid var(--primary);
+    pointer-events: none;
+  }
+  .wheel-pad { height: 44px; }
+  .wheel-item {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    scroll-snap-align: center;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .wheel-item.active {
+    color: #fff;
+    font-size: 1.08rem;
+  }
+
+  /* 포스트잇 모달 */
+  .postit-input-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .postit-input-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .postit-input-row button {
+    background: var(--postit);
+    color: var(--postit-text);
+    border: none;
+    border-radius: 8px;
+    padding: 0 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .postit-item {
+    background: #fef9c3;
+    color: #1e293b;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .postit-item.done {
+    background: #334155;
+    color: #94a3b8;
+    text-decoration: line-through;
+  }
+  .postit-check {
+    width: 21px;
+    height: 21px;
+    accent-color: var(--success);
+    cursor: pointer;
+  }
+
+  /* 달력 스타일 */
+  .cal-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+  }
+  .cal-dow { font-size: 0.74rem; color: var(--text-muted); padding: 4px 0; }
+  .cal-day {
+    background: var(--bg);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 5px 2px;
+    min-height: 52px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cal-day.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .cal-day.today { font-weight: 800; color: var(--accent); }
+  .cal-num { font-size: 0.84rem; }
+  .cal-dots { display: flex; gap: 3px; align-items: center; font-size: 0.65rem; }
+  .dot-rate { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* 폼 요소 */
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+  .form-control {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-full {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 비전보드 스플래시 -->
+<div id="vision-splash" class="hidden" onclick="closeVisionSplash()">
+  <img id="vision-img-el" src="" alt="" style="display:none;">
+  <div id="vision-quote-el" class="vision-quote"></div>
+  <div class="skip-hint">화면을 터치하면 바로 시작합니다</div>
+</div>
+
+<!-- 상단 고정 헤더 -->
+<header>
+  <div class="header-top">
+    <div class="date-nav">
+      <button onclick="shiftDate(-1)">◀</button>
+      <div class="date-title" onclick="goToday()" id="header-date-text">2026.11.25 (수)</div>
+      <button onclick="shiftDate(1)">▶</button>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="edit-mode-btn" onclick="toggleEditMode()">☑️ 체크선택</button>
+      <button class="icon-btn postit-btn" onclick="openModal('postit-modal')">
+        📝 <span class="badge-count" id="postit-badge">0</span>
+      </button>
+      <button class="icon-btn" onclick="openModal('calendar-modal')">📅</button>
+      <button class="icon-btn" onclick="openModal('settings-modal')">⚙️</button>
+    </div>
+  </div>
+  <div class="summary-bar">
+    <span id="rate-text">루틴 0% (0/0)</span>
+    <div class="progress-wrap"><div class="progress-fill" id="rate-bar"></div></div>
+    <span id="done-postit-summary">해치운 일 0건</span>
+  </div>
+  <div class="sleep-banner" id="sleep-banner"></div>
+</header>
+
+<!-- 중앙 메인 타임라인 -->
+<main id="timeline-scroll">
+  <div id="edit-mode-banner" class="edit-mode-banner" style="display:none;">
+    <span>체크박스를 달 항목을 켜거나 고정 일정을 수정하세요.</span>
+    <button class="close-btn" style="background:var(--primary); border:none; color:#fff;" onclick="openFixedEditModal(-1)">+ 고정일정</button>
+  </div>
+  <div id="timeline-list"></div>
+
+  <!-- 하단 간단 일기 -->
+  <div class="diary-box" id="diary-section">
+    <div class="diary-header">
+      <span>✍️ 오늘의 간단 일기</span>
+      <span class="diary-status" id="diary-save-msg"></span>
+    </div>
+    <textarea id="diary-textarea" class="diary-input" placeholder="오늘의 핵심 회고, 감사한 점, 내일 보완할 점 등을 자유롭게 적어보세요..."></textarea>
+  </div>
+</main>
+
+<!-- 하단 플로팅 액션 바 -->
+<div class="bottom-bar">
+  <button class="fab-btn fab-oneoff" onclick="openOneOffModal()">+ 일회성</button>
+  <button class="fab-btn fab-sleep" onclick="recordSleepNow()">🌙 취침</button>
+  <button class="fab-btn fab-wake" onclick="recordWakeNow()">☀️ 기상</button>
+  <button class="fab-btn fab-diary" onclick="scrollToDiary()">✍️ 일기</button>
+</div>
+
+<!-- 1. 포스트잇 모달 -->
+<div class="modal-backdrop" id="postit-modal" onclick="closeModalOnBg(event, 'postit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">📝 포스트잇 (할 일 / 구매 / 메모)</div>
+      <button class="close-btn" onclick="closeModal('postit-modal')">닫기</button>
+    </div>
+    <div class="postit-input-row">
+      <input type="text" id="postit-input" placeholder="해야 할 일이나 살 것을 적고 Enter..." onkeydown="if(event.key==='Enter') addPostit()">
+      <button onclick="addPostit()">추가</button>
+    </div>
+    <div id="postit-list"></div>
+  </div>
+</div>
+
+<!-- 2. 일회성 시간 일정 추가 모달 (30분 드럼 스크롤 피커) -->
+<div class="modal-backdrop" id="oneoff-modal" onclick="closeModalOnBg(event, 'oneoff-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚡ 일회성 시간 일정 추가</div>
+      <button class="close-btn" onclick="closeModal('oneoff-modal')">닫기</button>
+    </div>
+    <div class="form-group">
+      <label>날짜</label>
+      <input type="date" id="oneoff-date" class="form-control">
+    </div>
+    <div class="wheel-picker-wrap">
+      <div class="wheel-col">
+        <label>시작 시간 (스크롤)</label>
+        <div style="position:relative;">
+          <div class="wheel-highlight"></div>
+          <div class="wheel-box" id="oneoff-start-wheel"></div>
+        </div>
+      </div>
+      <div class="wheel-col">
+        <label>종료 시간 (스크롤)</label>
+        <div style="position:relative;">
+          <div class="wheel-highlight"></div>
+          <div class="wheel-box" id="oneoff-end-wheel"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>일정 내용</label>
+      <input type="text" id="oneoff-title" class="form-control" placeholder="예: 치과 방문 / 택배 수령 / 긴급 작업">
+    </div>
+    <button class="btn-full" onclick="saveOneOff()">일회성 일정 등록</button>
+  </div>
+</div>
+
+<!-- 3. 고정 일정 수정/추가 모달 (30분 드럼 스크롤 피커) -->
+<div class="modal-backdrop" id="fixed-edit-modal" onclick="closeModalOnBg(event, 'fixed-edit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title" id="fixed-edit-modal-title">고정 일정 수정</div>
+      <button class="close-btn" onclick="closeModal('fixed-edit-modal')">닫기</button>
+    </div>
+    <div class="wheel-picker-wrap">
+      <div class="wheel-col">
+        <label>시작 시간 (스크롤)</label>
+        <div style="position:relative;">
+          <div class="wheel-highlight"></div>
+          <div class="wheel-box" id="fixed-start-wheel"></div>
+        </div>
+      </div>
+      <div class="wheel-col">
+        <label>종료 시간 (스크롤)</label>
+        <div style="position:relative;">
+          <div class="wheel-highlight"></div>
+          <div class="wheel-box" id="fixed-end-wheel"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>일정 제목</label>
+      <input type="text" id="fixed-edit-title" class="form-control">
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-full" style="margin-top:0;" onclick="saveFixedEdit()">저장하기</button>
+      <button class="close-btn" id="fixed-delete-btn" style="background:#7f1d1d; border-color:#991b1b; padding:0 14px;" onclick="deleteFixedItem()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 취침/기상 시간 직접 수정 모달 (숫자 직접 입력) -->
+<div class="modal-backdrop" id="sleep-edit-modal" onclick="closeModalOnBg(event, 'sleep-edit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">🌙 수면 시간 직접 수정</div>
+      <button class="close-btn" onclick="closeModal('sleep-edit-modal')">닫기</button>
+    </div>
+    <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0;" id="sleep-edit-desc"></p>
+    <div class="row-2">
+      <div class="form-group">
+        <label>취침 시각 (직접 입력)</label>
+        <input type="time" id="edit-sleep-in" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>기상 시각 (직접 입력)</label>
+        <input type="time" id="edit-wake-in" class="form-control">
+      </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-full" style="margin-top:0;" onclick="saveSleepManual()">시간 저장</button>
+      <button class="close-btn" onclick="clearSleepManual()">기록 초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 달력 모달 -->
+<div class="modal-backdrop" id="calendar-modal" onclick="closeModalOnBg(event, 'calendar-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">📅 성취도 & 일기 달력</div>
+      <button class="close-btn" onclick="closeModal('calendar-modal')">닫기</button>
+    </div>
+    <div class="cal-nav">
+      <button class="close-btn" onclick="shiftCalMonth(-1)">◀ 이전 달</button>
+      <strong id="cal-month-label">2026년 11월</strong>
+      <button class="close-btn" onclick="shiftCalMonth(1)">다음 달 ▶</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="margin-top:10px; font-size:0.75rem; color:var(--text-muted); display:flex; gap:10px; justify-content:center;">
+      <span>🟢 80%↑</span>
+      <span>🟡 50%↑</span>
+      <span>🔴 50%↓</span>
+      <span>✍️ 일기</span>
+    </div>
+  </div>
+</div>
+
+<!-- 6. 설정 & 엑셀 붙여넣기 & 비전보드 모달 -->
+<div class="modal-backdrop" id="settings-modal" onclick="closeModalOnBg(event, 'settings-modal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ 설정 및 데이터 관리</div>
+      <button class="close-btn" onclick="closeModal('settings-modal')">닫기</button>
+    </div>
+
+    <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
+      <label style="color:var(--text); font-weight:700;">✨ 앱 실행 시 비전보드 설정</label>
+      <div class="row-2" style="margin-top:6px;">
+        <div>
+          <label>표시 시간</label>
+          <select id="vision-sec" class="form-control">
+            <option value="0">사용 안 함</option>
+            <option value="2">2초</option>
+            <option value="3" selected>3초</option>
+            <option value="5">5초</option>
+          </select>
+        </div>
+        <div>
+          <label>비전 이미지 선택</label>
+          <input type="file" id="vision-file" accept="image/*" class="form-control" style="padding:6px;">
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <label>비전 문구 (목표/좌우명)</label>
+        <textarea id="vision-text" class="form-control" rows="2" placeholder="앱을 켤 때마다 볼 핵심 문구를 적어주세요"></textarea>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn-full" style="margin-top:0;" onclick="saveVisionSettings()">비전보드 저장</button>
+        <button class="close-btn" onclick="previewVision()">미리보기</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
+      <label style="color:var(--text); font-weight:700;">🌙 새벽 활동 기준 (날짜 전환 시각)</label>
+      <select id="day-cutoff" class="form-control" onchange="saveCutoff()">
+        <option value="0">자정 (00:00)에 바로 다음 날로 전환</option>
+        <option value="4">새벽 04:00까지 전날 일정으로 유지</option>
+        <option value="5" selected>새벽 05:00까지 전날 일정으로 유지 (추천)</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
+      <label style="color:var(--text); font-weight:700;">📊 엑셀 시간표 덮어쓰기 (복사 후 붙여넣기)</label>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 6px;">엑셀 표([시간대 ~ 일요일])를 복사해 붙여넣으면 연속된 시간은 청크로 합쳐지고, '수면' 칸은 자동으로 제외됩니다.</p>
+      <textarea id="excel-paste-area" class="form-control" rows="4" placeholder="여기에 엑셀 표를 붙여넣으세요..."></textarea>
+      <button class="btn-full" onclick="importExcelTSV()">시간표 적용하기</button>
+    </div>
+
+    <div class="form-group">
+      <label style="color:var(--text); font-weight:700;">💾 전체 기록 백업 / 복원 (JSON)</label>
+      <div class="row-2" style="margin-top:6px;">
+        <button class="close-btn" style="padding:10px;" onclick="exportBackup()">백업 파일 다운로드</button>
+        <label class="close-btn" style="padding:10px; text-align:center; cursor:pointer;">
+          백업 파일 불러오기
+          <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)">
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS_KR = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+const DAYS_SHORT = ['일', '월', '화', '수', '목', '금', '토'];
+const SLOT_HEIGHT = 44; // 30분당 44px 정배율
+
+// 30분 단위 타임 슬롯 목록 생성 (06:00 ~ 04:30)
+const TIME_OPTIONS_30M = (() => {
+  const arr = [];
+  for (let m = 6 * 60; m <= 28 * 60 + 30; m += 30) {
+    const h = Math.floor((m % 1440) / 60);
+    const min = m % 60;
+    arr.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+  }
+  return arr;
+})();
+
+// 기본 내장 시간표 (수면 카드 제외)
+const DEFAULT_TEMPLATE = {
+  "월요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "이동 (폰 교보앱 틈새독서)" },
+    { start: "08:00", end: "08:30", title: "이동 & 수업 준비" },
+    { start: "08:30", end: "09:00", title: "수업 준비 (틈새독서)" },
+    { start: "09:00", end: "12:00", title: "학교 수업" },
+    { start: "12:00", end: "12:30", title: "점심식사" },
+    { start: "12:30", end: "13:00", title: "점심식사 & 휴식" },
+    { start: "13:00", end: "14:00", title: "유동 검술" },
+    { start: "14:00", end: "14:30", title: "유동 검술 / 휴식" },
+    { start: "14:30", end: "15:30", title: "인강 1시간 컷" },
+    { start: "15:30", end: "16:00", title: "인강 복습 & 정리" },
+    { start: "16:00", end: "16:30", title: "성경교육 원고 작성" },
+    { start: "16:30", end: "17:00", title: "폰 교보앱 틈새독서" },
+    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식" },
+    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)" },
+    { start: "19:00", end: "21:00", title: "저녁 수업" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+  ],
+  "화요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "묵상/기도" },
+    { start: "08:00", end: "10:00", title: "밸리AI 라이브 복습" },
+    { start: "10:00", end: "11:00", title: "학교공부 / 주간 버퍼" },
+    { start: "11:00", end: "11:30", title: "휴식 & 검술 이동" },
+    { start: "11:30", end: "12:30", title: "유동 검술" },
+    { start: "12:30", end: "13:00", title: "유동 검술 & 점심" },
+    { start: "13:00", end: "13:30", title: "점심식사" },
+    { start: "13:30", end: "14:00", title: "이동 (강의실)" },
+    { start: "14:00", end: "17:00", title: "학교 수업" },
+    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식" },
+    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)" },
+    { start: "19:00", end: "21:00", title: "저녁 수업" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+  ],
+  "수요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "묵상/기도" },
+    { start: "08:00", end: "09:00", title: "인강 1시간 컷" },
+    { start: "09:00", end: "09:30", title: "인강 복습 & 정리" },
+    { start: "09:30", end: "10:00", title: "성경교육 스피킹 리허설" },
+    { start: "10:00", end: "10:30", title: "폰 교보앱 틈새독서" },
+    { start: "10:30", end: "11:00", title: "휴식 & 점심 이동" },
+    { start: "11:00", end: "11:30", title: "점심식사" },
+    { start: "11:30", end: "12:00", title: "점심식사 & 검술 이동" },
+    { start: "12:00", end: "13:00", title: "유동 검술" },
+    { start: "13:00", end: "13:30", title: "점심식사 & 이동" },
+    { start: "13:30", end: "14:00", title: "이동 (강의실)" },
+    { start: "14:00", end: "17:00", title: "학교 수업" },
+    { start: "17:00", end: "17:30", title: "이동 (예배당으로)" },
+    { start: "17:30", end: "18:00", title: "이동 (외출)" },
+    { start: "18:00", end: "21:00", title: "삼일예배" },
+    { start: "21:00", end: "21:30", title: "예배 종료 & 이동" },
+    { start: "21:30", end: "22:00", title: "이동? (귀가)?" },
+    { start: "22:00", end: "23:00", title: "공백 버퍼 (식사/정리/15m녹음/휴식/대기)" },
+    { start: "23:00", end: "23:30", title: "23:00 이후 일정 소화" }
+  ],
+  "목요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "휴식 & 틈새독서" },
+    { start: "08:00", end: "08:30", title: "이동 (폰 교보앱 틈새독서)" },
+    { start: "08:30", end: "09:00", title: "이동 & 수업 준비" },
+    { start: "09:00", end: "10:00", title: "수업 준비 (틈새독서)" },
+    { start: "10:00", end: "13:00", title: "학교 수업" },
+    { start: "13:00", end: "13:30", title: "점심식사" },
+    { start: "13:30", end: "14:00", title: "점심식사 & 휴식" },
+    { start: "14:00", end: "15:00", title: "유동 검술" },
+    { start: "15:00", end: "15:30", title: "유동 검술 / 휴식" },
+    { start: "15:30", end: "17:00", title: "밸리AI 공부/정리" },
+    { start: "17:00", end: "17:30", title: "촬영공부 이론 (30m)" },
+    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식" },
+    { start: "18:00", end: "18:30", title: "이동 준비 (18:30 출발)" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)" },
+    { start: "19:00", end: "21:00", title: "저녁 수업" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+  ],
+  "금요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 말씀정리 준비" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "11:30", title: "오전 말씀정리" },
+    { start: "11:30", end: "12:00", title: "휴식 & 점심식사" },
+    { start: "12:00", end: "12:30", title: "점심식사" },
+    { start: "12:30", end: "13:00", title: "휴식 & 작업 세팅" },
+    { start: "13:00", end: "15:00", title: "딥워크 A: 섬유공예 & 포폴기록" },
+    { start: "15:00", end: "15:30", title: "딥워크 A: 촬영실습/포폴정리" },
+    { start: "15:30", end: "16:00", title: "휴식 & 버퍼" },
+    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린공부/체력)" },
+    { start: "18:00", end: "18:30", title: "저녁식사" },
+    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식" },
+    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서" },
+    { start: "19:30", end: "22:00", title: "자유시간 / 취미" },
+    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)" },
+    { start: "22:30", end: "23:00", title: "취침 준비" }
+  ],
+  "토요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "묵상/기도" },
+    { start: "08:00", end: "10:00", title: "딥워크 A: 암기어플 버그수정" },
+    { start: "10:00", end: "11:00", title: "휴식 & 자유시간" },
+    { start: "11:00", end: "12:00", title: "자유시간 / 유동일정" },
+    { start: "12:00", end: "12:30", title: "점심식사" },
+    { start: "12:30", end: "13:00", title: "점심식사 & 휴식" },
+    { start: "13:00", end: "15:00", title: "딥워크 B: 만화 작업" },
+    { start: "15:00", end: "16:00", title: "딥워크 B: 전공개발 계획" },
+    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린작업/체력)" },
+    { start: "18:00", end: "18:30", title: "저녁식사" },
+    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식" },
+    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서" },
+    { start: "19:30", end: "22:00", title: "자유시간 / 취미" },
+    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)" },
+    { start: "22:30", end: "23:00", title: "취침 준비" }
+  ],
+  "일요일": [
+    { start: "06:00", end: "06:30", title: "기상 & 준비" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 예배 준비" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
+    { start: "07:30", end: "08:00", title: "예배 준비" },
+    { start: "08:00", end: "08:30", title: "이동 (외출)" },
+    { start: "08:30", end: "09:00", title: "주일 예배 준비" },
+    { start: "09:00", end: "11:00", title: "주일 예배" },
+    { start: "11:00", end: "12:00", title: "예배 후 교제/식사" },
+    { start: "12:00", end: "14:00", title: "주일 오후 일정" },
+    { start: "14:00", end: "16:30", title: "자유시간 / 이북리더기 독서" },
+    { start: "16:30", end: "17:00", title: "자유시간 / 휴식" },
+    { start: "17:00", end: "17:30", title: "저녁식사" },
+    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식" },
+    { start: "18:00", end: "18:30", title: "귀가 & 정리" },
+    { start: "18:30", end: "20:00", title: "주간 리셋 버퍼 (다음주 세팅)" },
+    { start: "20:00", end: "21:00", title: "자유시간 / 휴식" },
+    { start: "21:00", end: "21:30", title: "수면 준비" },
+    { start: "21:30", end: "22:00", title: "성구복습 & 3줄일기(15m)" },
+    { start: "22:00", end: "22:30", title: "취침 준비" }
+  ]
+};
+
+// 초기 체크 대상 자동 생성 (핵심 루틴만 기본 ON, 이후 사용자가 자유롭게 ON/OFF)
+function buildInitialTrackedMap(tpl) {
+  const map = {};
+  Object.keys(tpl).forEach(day => {
+    tpl[day].forEach(item => {
+      const id = `${day}_${item.start}_${item.title}`;
+      if (/서브맥시멀|학교 수업|인강|밸리AI|딥워크|말씀정리|성구복습|3줄일기|주일 예배|삼일예배/.test(item.title)) {
+        map[id] = true;
+      }
+    });
+  });
+  return map;
+}
+
+// 상태 로드
+let state = {
+  template: JSON.parse(localStorage.getItem('rt_template_v2')) || DEFAULT_TEMPLATE,
+  trackedIds: JSON.parse(localStorage.getItem('rt_trackedIds_v2')) || null,
+  dailyLogs: JSON.parse(localStorage.getItem('rt_dailyLogs_v2')) || {}, // { "YYYY-MM-DD": { checked:{}, memos:{}, diary:"", sleepAt:"", wakeAt:"" } }
+  oneOffs: JSON.parse(localStorage.getItem('rt_oneOffs_v2')) || [],
+  postits: JSON.parse(localStorage.getItem('rt_postits_v2')) || [],
+  cutoffHour: parseInt(localStorage.getItem('rt_cutoff_v2') || '5', 10),
+  vision: JSON.parse(localStorage.getItem('rt_vision_v2')) || { sec: 3, text: "오늘의 작은 실행이 쌓여\n원하는 미래를 만든다.", img: "" }
+};
+
+if (!state.trackedIds) {
+  state.trackedIds = buildInitialTrackedMap(state.template);
+}
+
+function saveState() {
+  localStorage.setItem('rt_template_v2', JSON.stringify(state.template));
+  localStorage.setItem('rt_trackedIds_v2', JSON.stringify(state.trackedIds));
+  localStorage.setItem('rt_dailyLogs_v2', JSON.stringify(state.dailyLogs));
+  localStorage.setItem('rt_oneOffs_v2', JSON.stringify(state.oneOffs));
+  localStorage.setItem('rt_postits_v2', JSON.stringify(state.postits));
+  localStorage.setItem('rt_cutoff_v2', String(state.cutoffHour));
+  localStorage.setItem('rt_vision_v2', JSON.stringify(state.vision));
+}
+
+function getLogicalTodayStr() {
+  const now = new Date();
+  if (now.getHours() < state.cutoffHour) now.setDate(now.getDate() - 1);
+  return formatDateStr(now);
+}
+function formatDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function parseDateStr(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function getPrevDateStr(dateStr) {
+  const d = parseDateStr(dateStr);
+  d.setDate(d.getDate() - 1);
+  return formatDateStr(d);
+}
+function getNowHHMM() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+let selectedDate = getLogicalTodayStr();
+let calViewDate = parseDateStr(selectedDate);
+let isEditMode = false;
+let openMemoId = null;
+
+function toLogicalMinutes(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  let mins = h * 60 + m;
+  if (h < state.cutoffHour) mins += 1440;
+  return mins;
+}
+function getCurrentLogicalMinutes() {
+  const now = new Date();
+  let mins = now.getHours() * 60 + now.getMinutes();
+  if (now.getHours() < state.cutoffHour) mins += 1440;
+  return mins;
+}
+
+// 비전보드 스플래시
+let visionTimer = null;
+function initVisionSplash() {
+  const sec = Number(state.vision.sec);
+  if (!sec || (!state.vision.text && !state.vision.img)) return;
+  showVisionSplash(sec);
+}
+function showVisionSplash(sec) {
+  const splash = document.getElementById('vision-splash');
+  const imgEl = document.getElementById('vision-img-el');
+  const quoteEl = document.getElementById('vision-quote-el');
+  if (state.vision.img) {
+    imgEl.src = state.vision.img;
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none';
+  }
+  quoteEl.textContent = state.vision.text || '';
+  splash.classList.remove('hidden');
+  clearTimeout(visionTimer);
+  visionTimer = setTimeout(closeVisionSplash, sec * 1000);
+}
+function closeVisionSplash() {
+  clearTimeout(visionTimer);
+  document.getElementById('vision-splash').classList.add('hidden');
+}
+
+function ensureDayLog(dateStr) {
+  if (!state.dailyLogs[dateStr]) {
+    state.dailyLogs[dateStr] = { checked: {}, memos: {}, diary: "", sleepAt: "", wakeAt: "" };
+  }
+  if (!state.dailyLogs[dateStr].memos) state.dailyLogs[dateStr].memos = {};
+  return state.dailyLogs[dateStr];
+}
+
+// 수면 시간 계산 유틸
+function calcSleepDuration(sleepAt, wakeAt) {
+  if (!sleepAt || !wakeAt) return '';
+  const [sh, sm] = sleepAt.split(':').map(Number);
+  const [wh, wm] = wakeAt.split(':').map(Number);
+  let sMin = sh * 60 + sm;
+  let wMin = wh * 60 + wm;
+  if (wMin <= sMin) wMin += 1440;
+  const diff = wMin - sMin;
+  return `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
+}
+
+// 원터치 취침 / 기상 기록
+function recordSleepNow() {
+  const log = ensureDayLog(selectedDate);
+  log.sleepAt = getNowHHMM();
+  saveState();
+  render();
+}
+function recordWakeNow() {
+  const nowStr = getNowHHMM();
+  const prevStr = getPrevDateStr(selectedDate);
+  const prevLog = state.dailyLogs[prevStr];
+  const curLog = ensureDayLog(selectedDate);
+
+  // 어젯밤 취침 기록이 있고 기상 기록이 비어있다면 어젯밤 수면과 자동 매칭
+  if (prevLog && prevLog.sleepAt && !prevLog.wakeAt) {
+    prevLog.wakeAt = nowStr;
+  } else {
+    curLog.wakeAt = nowStr;
+  }
+  saveState();
+  render();
+}
+
+// 수면 시간 수동 수정 모달
+let editingSleepTargetDate = null;
+function openSleepEditModal(targetDate) {
+  editingSleepTargetDate = targetDate;
+  const log = ensureDayLog(targetDate);
+  document.getElementById('sleep-edit-desc').textContent = `${targetDate} 밤 기준 수면 기록 수정`;
+  document.getElementById('edit-sleep-in').value = log.sleepAt || '';
+  document.getElementById('edit-wake-in').value = log.wakeAt || '';
+  openModal('sleep-edit-modal');
+}
+function saveSleepManual() {
+  const log = ensureDayLog(editingSleepTargetDate);
+  log.sleepAt = document.getElementById('edit-sleep-in').value;
+  log.wakeAt = document.getElementById('edit-wake-in').value;
+  saveState();
+  closeModal('sleep-edit-modal');
+  render();
+}
+function clearSleepManual() {
+  const log = ensureDayLog(editingSleepTargetDate);
+  log.sleepAt = '';
+  log.wakeAt = '';
+  saveState();
+  closeModal('sleep-edit-modal');
+  render();
+}
+
+// 편집 모드 토글
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  const btn = document.getElementById('edit-mode-btn');
+  btn.classList.toggle('active-mode', isEditMode);
+  btn.textContent = isEditMode ? '✓ 선택완료' : '☑️ 체크선택';
+  document.getElementById('edit-mode-banner').style.display = isEditMode ? 'flex' : 'none';
+  render();
+}
+
+function toggleTrackedItem(day, idx, id, title) {
+  const nextVal = !state.trackedIds[id];
+  if (nextVal) {
+    // 같은 이름의 루틴이 다른 요일에도 있으면 일괄 적용 여부 확인
+    let sameCount = 0;
+    Object.keys(state.template).forEach(d => {
+      state.template[d].forEach(it => { if (it.title === title) sameCount++; });
+    });
+    if (sameCount > 1 && confirm(`'${title}' 일정이 다른 요일에도 총 ${sameCount}개 있습니다.\n모든 요일에 한꺼번에 체크박스를 켤까요?\n(취소를 누르면 오늘 요일만 켜집니다)`)) {
+      Object.keys(state.template).forEach(d => {
+        state.template[d].forEach(it => {
+          if (it.title === title) state.trackedIds[`${d}_${it.start}_${it.title}`] = true;
+        });
+      });
+    } else {
+      state.trackedIds[id] = true;
+    }
+  } else {
+    delete state.trackedIds[id];
+  }
+  saveState();
+  render();
+}
+
+// 메인 렌더링
+function render() {
+  const todayStr = getLogicalTodayStr();
+  const isToday = (selectedDate === todayStr);
+  const dObj = parseDateStr(selectedDate);
+  const dowKr = DAYS_KR[dObj.getDay()];
+  const dowShort = DAYS_SHORT[dObj.getDay()];
+
+  document.getElementById('header-date-text').innerHTML =
+    `${selectedDate.replace(/-/g, '.')} (${dowShort})` +
+    (isToday ? `<span class="today-badge">오늘</span>` : '');
+
+  const dayLog = ensureDayLog(selectedDate);
+  const prevStr = getPrevDateStr(selectedDate);
+  const prevLog = state.dailyLogs[prevStr];
+
+  // 수면 배너 표시 (어젯밤 수면 결과 + 오늘 밤 취침 기록)
+  const sleepBannerEl = document.getElementById('sleep-banner');
+  let lastNightHtml = '어젯밤 수면: 미기록';
+  if (prevLog && (prevLog.sleepAt || prevLog.wakeAt)) {
+    const dur = calcSleepDuration(prevLog.sleepAt, prevLog.wakeAt);
+    lastNightHtml = `어젯밤: <span class="sleep-time-link" onclick="openSleepEditModal('${prevStr}')">${prevLog.sleepAt || '??:??'}~${prevLog.wakeAt || '??:??'}${dur ? ` (${dur})` : ''}</span>`;
+  }
+  let tonightHtml = `오늘 취침: <span class="sleep-time-link" onclick="openSleepEditModal('${selectedDate}')">${dayLog.sleepAt || '미기록'}</span>`;
+  sleepBannerEl.innerHTML = `<span>${lastNightHtml}</span><span>${tonightHtml}</span>`;
+
+  // 고정 루틴 + 일회성 시간 일정 병합
+  const baseChunks = (state.template[dowKr] || []).map((item, idx) => ({
+    ...item,
+    isOneOff: false,
+    tplIdx: idx,
+    id: `${dowKr}_${item.start}_${item.title}`
+  }));
+
+  const dayOneOffs = state.oneOffs
+    .filter(o => o.date === selectedDate)
+    .map(o => ({ ...o, isOneOff: true }));
+
+  const allItems = [...baseChunks, ...dayOneOffs].sort((a, b) => {
+    const diff = toLogicalMinutes(a.start) - toLogicalMinutes(b.start);
+    if (diff !== 0) return diff;
+    return a.isOneOff ? -1 : 1;
+  });
+
+  const nowMins = getCurrentLogicalMinutes();
+  const listEl = document.getElementById('timeline-list');
+  listEl.innerHTML = '';
+
+  let totalTrackable = 0;
+  let totalDone = 0;
+  let currentCardEl = null;
+  let prevEndM = null;
+
+  allItems.forEach(item => {
+    const startM = toLogicalMinutes(item.start);
+    let endM = toLogicalMinutes(item.end);
+    if (endM <= startM) endM += 1440;
+
+    // 이전 일정과 빈 시간 간격(Gap)이 있으면 1:1 비율의 빈 블록 삽입
+    if (!item.isOneOff && prevEndM !== null && startM > prevEndM) {
+      const gapSlots = (startM - prevEndM) / 30;
+      const gapH = Math.max(28, Math.round(gapSlots * SLOT_HEIGHT));
+      const gapDiv = document.createElement('div');
+      gapDiv.className = 'gap-card';
+      gapDiv.style.height = `${gapH}px`;
+      gapDiv.textContent = `빈 시간 (${(startM - prevEndM)}분)`;
+      listEl.appendChild(gapDiv);
+    }
+    if (!item.isOneOff) prevEndM = endM;
+
+    const durationM = endM - startM;
+    const slotCount = Math.max(1, Math.round(durationM / 30));
+    const cardHeight = slotCount * SLOT_HEIGHT; // 엄격한 1:1 시간 비례 높이
+
+    const durText = durationM >= 60
+      ? (durationM % 60 === 0 ? `${durationM / 60}시간` : `${Math.floor(durationM / 60)}시간 ${durationM % 60}분`)
+      : `${durationM}분`;
+
+    const isTracked = item.isOneOff ? true : !!state.trackedIds[item.id];
+    const isPast = isToday && (nowMins >= endM);
+    const isCurrent = isToday && (nowMins >= startM && nowMins < endM);
+    const isChecked = item.isOneOff ? item.done : !!dayLog.checked[item.id];
+    const memoText = dayLog.memos[item.id] || '';
+
+    if (isTracked) {
+      totalTrackable++;
+      if (isChecked) totalDone++;
+    }
+
+    // 왼쪽 30분 눈금 세그먼트 생성
+    let ticksHtml = '<div class="slot-ticks">';
+    for (let s = 0; s < slotCount; s++) ticksHtml += '<div class="slot-tick-seg"></div>';
+    ticksHtml += '</div>';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chunk-wrapper';
+
+    const card = document.createElement('div');
+    card.style.minHeight = `${cardHeight}px`;
+    card.className = 'chunk-card' +
+      (slotCount >= 2 ? ' tall' : '') +
+      (isPast ? ' past' : '') +
+      (isCurrent ? ' current' : '') +
+      (item.isOneOff ? ' one-off' : '') +
+      (isTracked ? ' is-tracked' : ' untracked') +
+      (isChecked && isTracked ? ' completed' : '');
+
+    if (isCurrent) currentCardEl = card;
+
+    let actionHtml = '';
+    if (isEditMode && !item.isOneOff) {
+      actionHtml = `
+        <button class="track-toggle-btn ${isTracked ? 'on' : ''}" onclick="toggleTrackedItem('${dowKr}', ${item.tplIdx}, '${item.id}', '${escapeJs(item.title)}')">
+          ${isTracked ? '체크 ON' : '체크 OFF'}
+        </button>
+        <button class="mini-edit-btn" onclick="openFixedEditModal(${item.tplIdx})">수정</button>
+      `;
+    } else {
+      actionHtml = `
+        ${item.isOneOff ? `<button class="mini-edit-btn" onclick="deleteOneOff('${item.id}')">🗑️</button>` : ''}
+        ${isTracked ? `<button class="check-circle ${isChecked ? 'checked' : ''}" onclick="toggleItemCheck('${item.id}', ${item.isOneOff})">${isChecked ? '✓' : ''}</button>` : ''}
+      `;
+    }
+
+    card.innerHTML = `
+      ${ticksHtml}
+      <div class="chunk-info" onclick="toggleMemoBox('${item.id}')">
+        <div class="chunk-time">
+          <span>${item.start}~${item.end}</span>
+          <span class="tag-pill tag-duration">${durText}</span>
+          ${item.isOneOff ? `<span class="tag-pill tag-oneoff">일회성</span>` : ''}
+          ${isCurrent ? `<span class="tag-pill tag-now">진행 중</span>` : ''}
+          ${memoText ? `<span class="tag-pill tag-memo-dot">메모 있음</span>` : ''}
+        </div>
+        <div class="chunk-title">${escapeHtml(item.title)}</div>
+      </div>
+      <div class="chunk-actions">${actionHtml}</div>
+    `;
+
+    // 한 줄 세부 메모 입력칸
+    const memoBox = document.createElement('div');
+    memoBox.className = 'inline-memo-box' + (openMemoId === item.id ? ' open' : '');
+    memoBox.innerHTML = `
+      <input type="text" value="${escapeHtml(memoText)}" placeholder="이 시간대 세부 작업 메모..."
+        oninput="saveItemMemo('${item.id}', this.value)"
+        onkeydown="if(event.key==='Enter') toggleMemoBox('${item.id}')">
+      <button class="close-btn" style="padding:4px 8px;" onclick="toggleMemoBox('${item.id}')">확인</button>
+    `;
+
+    wrap.appendChild(card);
+    wrap.appendChild(memoBox);
+    listEl.appendChild(wrap);
+  });
+
+  // 상단 달성률 및 포스트잇 요약
+  const pct = totalTrackable > 0 ? Math.round((totalDone / totalTrackable) * 100) : 0;
+  document.getElementById('rate-text').textContent = `루틴 ${pct}% (${totalDone}/${totalTrackable})`;
+  document.getElementById('rate-bar').style.width = `${pct}%`;
+
+  const uncompletedPostits = state.postits.filter(p => !p.completedDate).length;
+  const completedTodayPostits = state.postits.filter(p => p.completedDate === selectedDate).length;
+  document.getElementById('postit-badge').textContent = uncompletedPostits;
+  document.getElementById('done-postit-summary').textContent = `해치운 일 ${completedTodayPostits}건`;
+
+  // 일기 바인딩
+  const diaryEl = document.getElementById('diary-textarea');
+  diaryEl.value = dayLog.diary || '';
+  document.getElementById('diary-save-msg').textContent = dayLog.diary ? '저장됨' : '';
+
+  if (isToday && currentCardEl && !window._hasScrolledInitial) {
+    window._hasScrolledInitial = true;
+    setTimeout(() => currentCardEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  }
+}
+
+function toggleMemoBox(id) {
+  openMemoId = (openMemoId === id) ? null : id;
+  render();
+}
+function saveItemMemo(id, val) {
+  const log = ensureDayLog(selectedDate);
+  log.memos[id] = val;
+  saveState();
+}
+
+function toggleItemCheck(id, isOneOff) {
+  if (isOneOff) {
+    const target = state.oneOffs.find(o => o.id === id);
+    if (target) target.done = !target.done;
+  } else {
+    const log = ensureDayLog(selectedDate);
+    log.checked[id] = !log.checked[id];
+  }
+  saveState();
+  render();
+}
+
+document.getElementById('diary-textarea').addEventListener('input', (e) => {
+  const log = ensureDayLog(selectedDate);
+  log.diary = e.target.value;
+  saveState();
+  document.getElementById('diary-save-msg').textContent = '자동 저장됨 ✓';
+});
+
+function scrollToDiary() {
+  document.getElementById('diary-section').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('diary-textarea').focus();
+}
+
+function shiftDate(delta) {
+  const d = parseDateStr(selectedDate);
+  d.setDate(d.getDate() + delta);
+  selectedDate = formatDateStr(d);
+  openMemoId = null;
+  render();
+}
+function goToday() {
+  selectedDate = getLogicalTodayStr();
+  window._hasScrolledInitial = false;
+  openMemoId = null;
+  render();
+}
+
+// 30분 단위 드럼 스크롤 휠 초기화 & 제어
+function buildWheelPicker(boxId, defaultVal, onSelectCallback) {
+  const box = document.getElementById(boxId);
+  box.innerHTML = `<div class="wheel-pad"></div>` +
+    TIME_OPTIONS_30M.map((t, idx) => `<div class="wheel-item" data-idx="${idx}" data-val="${t}">${t}</div>`).join('') +
+    `<div class="wheel-pad"></div>`;
+
+  const items = box.querySelectorAll('.wheel-item');
+  items.forEach((el, idx) => {
+    el.onclick = () => {
+      box.scrollTo({ top: idx * 44, behavior: 'smooth' });
+    };
+  });
+
+  let scrollTimeout = null;
+  box.onscroll = () => {
+    clearTimeout(scrollTimeout);
+    const activeIdx = Math.min(TIME_OPTIONS_30M.length - 1, Math.max(0, Math.round(box.scrollTop / 44)));
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+    scrollTimeout = setTimeout(() => {
+      if (onSelectCallback) onSelectCallback(TIME_OPTIONS_30M[activeIdx], activeIdx);
+    }, 80);
+  };
+
+  const initIdx = Math.max(0, TIME_OPTIONS_30M.indexOf(defaultVal));
+  setTimeout(() => {
+    box.scrollTop = initIdx * 44;
+    items.forEach((el, i) => el.classList.toggle('active', i === initIdx));
+  }, 20);
+}
+
+function getWheelValue(boxId) {
+  const box = document.getElementById(boxId);
+  const activeIdx = Math.min(TIME_OPTIONS_30M.length - 1, Math.max(0, Math.round(box.scrollTop / 44)));
+  return TIME_OPTIONS_30M[activeIdx];
+}
+
+// 일회성 시간 일정 모달
+function openOneOffModal() {
+  document.getElementById('oneoff-date').value = selectedDate;
+  document.getElementById('oneoff-title').value = '';
+  openModal('oneoff-modal');
+  buildWheelPicker('oneoff-start-wheel', '14:00', (val, idx) => {
+    const nextIdx = Math.min(TIME_OPTIONS_30M.length - 1, idx + 1);
+    const endBox = document.getElementById('oneoff-end-wheel');
+    endBox.scrollTo({ top: nextIdx * 44, behavior: 'smooth' });
+  });
+  buildWheelPicker('oneoff-end-wheel', '15:00', null);
+}
+function saveOneOff() {
+  const date = document.getElementById('oneoff-date').value;
+  const start = getWheelValue('oneoff-start-wheel');
+  const end = getWheelValue('oneoff-end-wheel');
+  const title = document.getElementById('oneoff-title').value.trim();
+  if (!date || !title) return alert('날짜와 일정 내용을 입력해 주세요.');
+  state.oneOffs.push({ id: 'o_' + Date.now(), date, start, end, title, done: false });
+  saveState();
+  closeModal('oneoff-modal');
+  selectedDate = date;
+  render();
+}
+function deleteOneOff(id) {
+  if (!confirm('이 일회성 일정을 삭제할까요?')) return;
+  state.oneOffs = state.oneOffs.filter(o => o.id !== id);
+  saveState();
+  render();
+}
+
+// 고정 일정 폰 내 수정/추가 모달
+let editingFixedIdx = -1;
+function openFixedEditModal(idx) {
+  editingFixedIdx = idx;
+  const dowKr = DAYS_KR[parseDateStr(selectedDate).getDay()];
+  const list = state.template[dowKr] || [];
+  const delBtn = document.getElementById('fixed-delete-btn');
+
+  let initStart = '12:00', initEnd = '13:00', initTitle = '';
+  if (idx >= 0 && list[idx]) {
+    document.getElementById('fixed-edit-modal-title').textContent = `${dowKr} 고정 일정 수정`;
+    initStart = list[idx].start;
+    initEnd = list[idx].end;
+    initTitle = list[idx].title;
+    delBtn.style.display = 'block';
+  } else {
+    document.getElementById('fixed-edit-modal-title').textContent = `${dowKr} 새 고정 일정 추가`;
+    delBtn.style.display = 'none';
+  }
+
+  document.getElementById('fixed-edit-title').value = initTitle;
+  openModal('fixed-edit-modal');
+  buildWheelPicker('fixed-start-wheel', initStart, (val, sIdx) => {
+    const nextIdx = Math.min(TIME_OPTIONS_30M.length - 1, sIdx + 1);
+    document.getElementById('fixed-end-wheel').scrollTo({ top: nextIdx * 44, behavior: 'smooth' });
+  });
+  buildWheelPicker('fixed-end-wheel', initEnd, null);
+}
+
+function saveFixedEdit() {
+  const dowKr = DAYS_KR[parseDateStr(selectedDate).getDay()];
+  const start = getWheelValue('fixed-start-wheel');
+  const end = getWheelValue('fixed-end-wheel');
+  const title = document.getElementById('fixed-edit-title').value.trim();
+  if (!title) return alert('일정 제목을 입력해 주세요.');
+
+  if (!state.template[dowKr]) state.template[dowKr] = [];
+  if (editingFixedIdx >= 0) {
+    const oldItem = state.template[dowKr][editingFixedIdx];
+    const oldId = `${dowKr}_${oldItem.start}_${oldItem.title}`;
+    const newId = `${dowKr}_${start}_${title}`;
+    if (state.trackedIds[oldId]) {
+      delete state.trackedIds[oldId];
+      state.trackedIds[newId] = true;
+    }
+    state.template[dowKr][editingFixedIdx] = { start, end, title };
+  } else {
+    state.template[dowKr].push({ start, end, title });
+    state.trackedIds[`${dowKr}_${start}_${title}`] = true;
+  }
+  state.template[dowKr].sort((a, b) => toLogicalMinutes(a.start) - toLogicalMinutes(b.start));
+  saveState();
+  closeModal('fixed-edit-modal');
+  render();
+}
+
+function deleteFixedItem() {
+  const dowKr = DAYS_KR[parseDateStr(selectedDate).getDay()];
+  if (editingFixedIdx < 0) return;
+  if (!confirm('이 고정 일정을 시간표에서 삭제할까요?')) return;
+  state.template[dowKr].splice(editingFixedIdx, 1);
+  saveState();
+  closeModal('fixed-edit-modal');
+  render();
+}
+
+// 포스트잇 모달
+function renderPostits() {
+  const container = document.getElementById('postit-list');
+  container.innerHTML = '';
+  const visible = state.postits.filter(p => !p.completedDate || p.completedDate === selectedDate);
+  visible.sort((a, b) => (a.completedDate ? 1 : 0) - (b.completedDate ? 1 : 0));
+
+  if (visible.length === 0) {
+    container.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:0.84rem; padding:20px 0;">남아있는 포스트잇 메모가 없습니다.</p>`;
+    return;
+  }
+  visible.forEach(p => {
+    const isDone = !!p.completedDate;
+    const div = document.createElement('div');
+    div.className = 'postit-item' + (isDone ? ' done' : '');
+    div.innerHTML = `
+      <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer;">
+        <input type="checkbox" class="postit-check" ${isDone ? 'checked' : ''} onchange="togglePostit('${p.id}')">
+        <span>${escapeHtml(p.text)}</span>
+      </label>
+      <button onclick="deletePostit('${p.id}')" style="background:none; border:none; cursor:pointer; font-size:0.9rem;">✕</button>
+    `;
+    container.appendChild(div);
+  });
+}
+function addPostit() {
+  const input = document.getElementById('postit-input');
+  const text = input.value.trim();
+  if (!text) return;
+  state.postits.unshift({ id: 'p_' + Date.now(), text, completedDate: null });
+  input.value = '';
+  saveState();
+  renderPostits();
+  render();
+}
+function togglePostit(id) {
+  const item = state.postits.find(p => p.id === id);
+  if (!item) return;
+  item.completedDate = item.completedDate ? null : selectedDate;
+  saveState();
+  renderPostits();
+  render();
+}
+function deletePostit(id) {
+  state.postits = state.postits.filter(p => p.id !== id);
+  saveState();
+  renderPostits();
+  render();
+}
+
+// 달력 모달
+function renderCalendar() {
+  const y = calViewDate.getFullYear();
+  const m = calViewDate.getMonth();
+  document.getElementById('cal-month-label').textContent = `${y}년 ${m + 1}월`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = DAYS_SHORT.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const lastDate = new Date(y, m + 1, 0).getDate();
+  const todayStr = getLogicalTodayStr();
+
+  for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+
+  for (let d = 1; d <= lastDate; d++) {
+    const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dowKr = DAYS_KR[new Date(y, m, d).getDay()];
+    const log = state.dailyLogs[dStr];
+    const hasDiary = log && log.diary && log.diary.trim().length > 0;
+
+    const trackedChunks = (state.template[dowKr] || []).filter(c => !!state.trackedIds[`${dowKr}_${c.start}_${c.title}`]);
+    let doneCount = 0;
+    if (log && log.checked) {
+      trackedChunks.forEach(c => {
+        if (log.checked[`${dowKr}_${c.start}_${c.title}`]) doneCount++;
+      });
+    }
+    const rate = trackedChunks.length > 0 ? Math.round((doneCount / trackedChunks.length) * 100) : 0;
+    const dotColor = doneCount === 0 ? 'transparent' : (rate >= 80 ? '#10b981' : (rate >= 50 ? '#f59e0b' : '#ef4444'));
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (dStr === selectedDate ? ' selected' : '') + (dStr === todayStr ? ' today' : '');
+    cell.onclick = () => {
+      selectedDate = dStr;
+      closeModal('calendar-modal');
+      render();
+    };
+    cell.innerHTML = `
+      <span class="cal-num">${d}</span>
+      <div class="cal-dots">
+        <span class="dot-rate" style="background:${dotColor};"></span>
+        ${hasDiary ? '<span>✍️</span>' : ''}
+      </div>
+    `;
+    grid.appendChild(cell);
+  }
+}
+function shiftCalMonth(delta) {
+  calViewDate.setMonth(calViewDate.getMonth() + delta);
+  renderCalendar();
+}
+
+// 엑셀 TSV 파싱 (수면 제외 + 청크 병합)
+function parseTSV(raw) {
+  const rows = [];
+  let row = [], cell = '', inQuotes = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '"') {
+      if (inQuotes && raw[i + 1] === '"') { cell += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === '\t' && !inQuotes) {
+      row.push(cell.replace(/\r?\n/g, ' ').trim());
+      cell = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (ch === '\r' && raw[i + 1] === '\n') i++;
+      row.push(cell.replace(/\r?\n/g, ' ').trim());
+      if (row.some(c => c !== '')) rows.push(row);
+      row = []; cell = '';
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell !== '' || row.length > 0) {
+    row.push(cell.replace(/\r?\n/g, ' ').trim());
+    if (row.some(c => c !== '')) rows.push(row);
+  }
+  return rows;
+}
+
+function importExcelTSV() {
+  const raw = document.getElementById('excel-paste-area').value;
+  if (!raw.trim()) return alert('붙여넣은 내용이 없습니다.');
+  const rows = parseTSV(raw);
+  if (rows.length < 2) return alert('올바른 표 형식이 아닙니다.');
+
+  const header = rows[0];
+  const dayColMap = {};
+  DAYS_KR.forEach(d => {
+    const idx = header.findIndex(h => h.includes(d) || h.includes(d[0]));
+    if (idx > 0) dayColMap[d] = idx;
+  });
+  if (Object.keys(dayColMap).length === 0) {
+    return alert('첫 줄에서 요일(월요일~일요일) 헤더를 찾지 못했습니다.');
+  }
+
+  const newTemplate = {};
+  Object.keys(dayColMap).forEach(day => {
+    const colIdx = dayColMap[day];
+    const chunks = [];
+    for (let r = 1; r < rows.length; r++) {
+      const timeRange = rows[r][0] || '';
+      const match = timeRange.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/);
+      if (!match) continue;
+      const start = match[1].padStart(5, '0');
+      const end = match[2].padStart(5, '0');
+      const cellText = (rows[r][colIdx] || '').trim();
+
+      // 수면 블록은 타임라인에서 제외
+      if (/^수면$|일정 종료 후 수면/.test(cellText)) continue;
+
+      if (chunks.length > 0 && (cellText === '' || cellText === chunks[chunks.length - 1].title)) {
+        chunks[chunks.length - 1].end = end;
+      } else if (cellText !== '') {
+        chunks.push({ start, end, title: cellText });
+      }
+    }
+    newTemplate[day] = chunks;
+  });
+
+  state.template = { ...state.template, ...newTemplate };
+  saveState();
+  document.getElementById('excel-paste-area').value = '';
+  alert('시간표가 적용되었습니다! (수면 칸은 자동 제외됨)');
+  closeModal('settings-modal');
+  render();
+}
+
+// 비전보드 설정
+function saveVisionSettings() {
+  const sec = parseInt(document.getElementById('vision-sec').value, 10);
+  const text = document.getElementById('vision-text').value;
+  const fileInput = document.getElementById('vision-file');
+  state.vision.sec = sec;
+  state.vision.text = text;
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      state.vision.img = e.target.result;
+      saveState();
+      alert('비전보드가 저장되었습니다.');
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    saveState();
+    alert('비전보드가 저장되었습니다.');
+  }
+}
+function previewVision() {
+  state.vision.text = document.getElementById('vision-text').value;
+  showVisionSplash(3);
+}
+function saveCutoff() {
+  state.cutoffHour = parseInt(document.getElementById('day-cutoff').value, 10);
+  saveState();
+  selectedDate = getLogicalTodayStr();
+  render();
+}
+
+// 백업/복원
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `routine_backup_${getLogicalTodayStr()}.json`;
+  a.click();
+}
+function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      state = { ...state, ...parsed };
+      saveState();
+      alert('백업이 복원되었습니다.');
+      render();
+    } catch {
+      alert('올바른 백업 파일이 아닙니다.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// 모달 제어
+function openModal(id) {
+  if (id === 'postit-modal') renderPostits();
+  if (id === 'calendar-modal') {
+    calViewDate = parseDateStr(selectedDate);
+    renderCalendar();
+  }
+  if (id === 'settings-modal') {
+    document.getElementById('vision-sec').value = String(state.vision.sec ?? 3);
+    document.getElementById('vision-text').value = state.vision.text || '';
+    document.getElementById('day-cutoff').value = String(state.cutoffHour);
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeModalOnBg(e, id) {
+  if (e.target.id === id) closeModal(id);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+function escapeJs(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+// 초기 실행
+initVisionSplash();
+render();
+setInterval(render, 60000);
+</script>
+</body>
+</html>
