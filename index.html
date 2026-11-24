@@ -15,7 +15,7 @@
     --text: #f8fafc;
     --text-muted: #94a3b8;
     --primary: #3b82f6;
-    --primary-soft: rgba(59, 130, 246, 0.18);
+    --primary-soft: rgba(59, 130, 246, 0.22);
     --accent: #f59e0b;
     --accent-soft: rgba(245, 158, 11, 0.18);
     --success: #10b981;
@@ -75,11 +75,11 @@
     color: var(--text-muted);
   }
 
-  /* 상단 고정 헤더 */
+  /* 상단 고정 헤더 (모바일 가로 최적화) */
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 9px 12px;
+    padding: 8px 10px;
     flex-shrink: 0;
     z-index: 20;
   }
@@ -87,43 +87,53 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
+    gap: 8px;
   }
   .date-nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
+    flex-shrink: 0;
   }
   .date-nav button {
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 7px;
-    padding: 5px 8px;
-    font-size: 0.85rem;
+    padding: 5px 7px;
+    font-size: 0.8rem;
     cursor: pointer;
   }
   .date-title {
     font-weight: 700;
-    font-size: 0.96rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    padding: 3px 4px;
+    padding: 4px 7px;
+    border-radius: 7px;
     white-space: nowrap;
+    letter-spacing: -0.02em;
+    border: 1px solid transparent;
+    transition: background 0.2s, border-color 0.2s;
   }
-  .today-badge {
-    font-size: 0.68rem;
-    background: var(--primary);
-    color: white;
-    padding: 1px 5px;
-    border-radius: 99px;
-    margin-left: 3px;
-    vertical-align: middle;
+  /* 오늘 날짜 하이라이트 블록 */
+  .date-title.is-today {
+    background: var(--primary-soft);
+    border-color: rgba(59, 130, 246, 0.65);
+    color: #93c5fd;
   }
+
+  /* 우측 액션 버튼 영역: 좁은 화면에서 좌우 스크롤 가능 */
   .header-actions {
     display: flex;
     align-items: center;
     gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 1px 0;
   }
+  .header-actions::-webkit-scrollbar { display: none; }
+
   .icon-btn {
     position: relative;
     background: var(--bg);
@@ -131,13 +141,14 @@
     color: var(--text);
     border-radius: 7px;
     padding: 5px 8px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 3px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .icon-btn.active-mode {
     background: var(--primary);
@@ -238,7 +249,6 @@
     transition: opacity 0.2s, border-color 0.2s;
     overflow: hidden;
   }
-  /* 좌측 30분 단위 눈금 바 */
   .slot-ticks {
     position: absolute;
     left: 0;
@@ -258,7 +268,6 @@
   .chunk-card.one-off .slot-tick-seg { background: var(--accent); }
   .chunk-card.completed .slot-tick-seg { background: var(--success); }
 
-  /* 1시간 이상 긴 블록은 상단-중앙 정렬로 시원하게 표시 */
   .chunk-card.tall {
     align-items: flex-start;
     padding-top: 10px;
@@ -295,7 +304,6 @@
     background: rgba(30, 41, 59, 0.55);
   }
 
-  /* 빈 시간(공백) 1:1 블록 */
   .gap-card {
     border: 1px dashed #334155;
     border-radius: 10px;
@@ -364,7 +372,6 @@
     border-color: var(--success);
   }
 
-  /* 편집 모드 버튼들 */
   .track-toggle-btn {
     padding: 5px 8px;
     border-radius: 7px;
@@ -479,7 +486,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.68);
+    background: rgba(0,0,0,0.72);
     z-index: 50;
     display: none;
     align-items: flex-end;
@@ -489,12 +496,23 @@
   .modal-sheet {
     background: var(--surface);
     width: 100%;
-    max-width: 540px;
-    max-height: 88dvh;
+    max-width: 560px;
+    max-height: 90dvh;
     border-radius: 18px 18px 0 0;
     padding: 16px 16px 24px;
     overflow-y: auto;
     border-top: 1px solid var(--border);
+  }
+  /* 포스트잇 모달은 키보드 올라올 때 가려지지 않도록 상단 정렬 및 여유 높이 부여 */
+  #postit-modal {
+    align-items: flex-start;
+    padding: 18px 10px 10px;
+  }
+  #postit-modal .modal-sheet {
+    border-radius: 16px;
+    max-height: 92dvh;
+    padding: 18px 16px 22px;
+    border: 1px solid var(--border);
   }
   @media (min-width: 600px) {
     .modal-backdrop { align-items: center; padding: 16px; }
@@ -506,13 +524,13 @@
     align-items: center;
     margin-bottom: 12px;
   }
-  .modal-title { font-size: 1.02rem; font-weight: 700; }
+  .modal-title { font-size: 1.04rem; font-weight: 700; }
   .close-btn {
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 8px;
-    padding: 5px 10px;
+    padding: 6px 11px;
     font-size: 0.82rem;
     cursor: pointer;
   }
@@ -533,7 +551,7 @@
   }
   .wheel-box {
     position: relative;
-    height: 132px; /* 3개 항목 노출 (44px * 3) */
+    height: 132px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -569,52 +587,149 @@
     font-size: 1.08rem;
   }
 
-  /* 포스트잇 모달 */
-  .postit-input-row {
+  /* 포스트잇 모달 (여러 줄 입력 & 여유로운 카드 & 수정 기능) */
+  .postit-compose-box {
     display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 14px;
   }
-  .postit-input-row input {
+  .postit-compose-box textarea {
     flex: 1;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 10px 12px;
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 76px; /* 기본 3줄 높이 확보 */
   }
-  .postit-input-row button {
+  .postit-compose-box textarea:focus {
+    outline: none;
+    border-color: #eab308;
+  }
+  .postit-add-btn {
     background: var(--postit);
     color: var(--postit-text);
     border: none;
-    border-radius: 8px;
-    padding: 0 15px;
-    font-weight: 700;
+    border-radius: 10px;
+    padding: 0 16px;
+    font-weight: 800;
+    font-size: 0.92rem;
     cursor: pointer;
+    flex-shrink: 0;
+  }
+  .postit-list-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   .postit-item {
     background: #fef9c3;
     color: #1e293b;
-    border-radius: 10px;
-    padding: 9px 12px;
-    margin-bottom: 7px;
+    border-radius: 12px;
+    padding: 12px 13px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    line-height: 1.48;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.22);
+    border-left: 5px solid #eab308;
   }
   .postit-item.done {
     background: #334155;
     color: #94a3b8;
+    border-left-color: #64748b;
+    box-shadow: none;
+  }
+  .postit-item.done .postit-text-body {
     text-decoration: line-through;
+  }
+  .postit-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
   }
   .postit-check {
     width: 21px;
     height: 21px;
+    margin-top: 2px;
     accent-color: var(--success);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .postit-text-body {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    flex: 1;
+  }
+  .postit-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .postit-action-btn {
+    background: rgba(15, 23, 42, 0.08);
+    border: none;
+    border-radius: 6px;
+    padding: 5px 7px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #1e293b;
+    font-weight: 700;
+  }
+  .postit-item.done .postit-action-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+  }
+  .postit-edit-area {
+    width: 100%;
+    background: #ffffff;
+    color: #0f172a;
+    border: 2px solid #ca8a04;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 76px;
+  }
+  .postit-edit-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 7px;
+  }
+  .postit-save-btn {
+    background: #1e293b;
+    color: #fef08a;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .postit-cancel-btn {
+    background: rgba(15, 23, 42, 0.12);
+    color: #1e293b;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
   }
 
@@ -691,7 +806,7 @@
   <div class="header-top">
     <div class="date-nav">
       <button onclick="shiftDate(-1)">◀</button>
-      <div class="date-title" onclick="goToday()" id="header-date-text">2026.11.25 (수)</div>
+      <div class="date-title" onclick="goToday()" id="header-date-text">26.11.25(수)</div>
       <button onclick="shiftDate(1)">▶</button>
     </div>
     <div class="header-actions">
@@ -737,22 +852,22 @@
   <button class="fab-btn fab-diary" onclick="scrollToDiary()">✍️ 일기</button>
 </div>
 
-<!-- 1. 포스트잇 모달 -->
+<!-- 1. 포스트잇 모달 (3줄 기본 높이 + 줄바꿈 + 수정 버튼) -->
 <div class="modal-backdrop" id="postit-modal" onclick="closeModalOnBg(event, 'postit-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
       <div class="modal-title">📝 포스트잇 (할 일 / 구매 / 메모)</div>
       <button class="close-btn" onclick="closeModal('postit-modal')">닫기</button>
     </div>
-    <div class="postit-input-row">
-      <input type="text" id="postit-input" placeholder="해야 할 일이나 살 것을 적고 Enter..." onkeydown="if(event.key==='Enter') addPostit()">
-      <button onclick="addPostit()">추가</button>
+    <div class="postit-compose-box">
+      <textarea id="postit-input" rows="3" placeholder="할 일이나 메모를 자유롭게 적어주세요.&#10;(Enter로 줄바꿈 가능)"></textarea>
+      <button class="postit-add-btn" onclick="addPostit()">추가</button>
     </div>
-    <div id="postit-list"></div>
+    <div id="postit-list" class="postit-list-wrap"></div>
   </div>
 </div>
 
-<!-- 2. 일회성 시간 일정 추가 모달 (30분 드럼 스크롤 피커) -->
+<!-- 2. 일회성 시간 일정 추가 모달 -->
 <div class="modal-backdrop" id="oneoff-modal" onclick="closeModalOnBg(event, 'oneoff-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
@@ -787,7 +902,7 @@
   </div>
 </div>
 
-<!-- 3. 고정 일정 수정/추가 모달 (30분 드럼 스크롤 피커) -->
+<!-- 3. 고정 일정 수정/추가 모달 -->
 <div class="modal-backdrop" id="fixed-edit-modal" onclick="closeModalOnBg(event, 'fixed-edit-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
@@ -821,7 +936,7 @@
   </div>
 </div>
 
-<!-- 4. 취침/기상 시간 직접 수정 모달 (숫자 직접 입력) -->
+<!-- 4. 취침/기상 시간 직접 수정 모달 -->
 <div class="modal-backdrop" id="sleep-edit-modal" onclick="closeModalOnBg(event, 'sleep-edit-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
@@ -935,9 +1050,8 @@
 <script>
 const DAYS_KR = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
 const DAYS_SHORT = ['일', '월', '화', '수', '목', '금', '토'];
-const SLOT_HEIGHT = 44; // 30분당 44px 정배율
+const SLOT_HEIGHT = 44;
 
-// 30분 단위 타임 슬롯 목록 생성 (06:00 ~ 04:30)
 const TIME_OPTIONS_30M = (() => {
   const arr = [];
   for (let m = 6 * 60; m <= 28 * 60 + 30; m += 30) {
@@ -948,7 +1062,6 @@ const TIME_OPTIONS_30M = (() => {
   return arr;
 })();
 
-// 기본 내장 시간표 (수면 카드 제외)
 const DEFAULT_TEMPLATE = {
   "월요일": [
     { start: "06:00", end: "06:30", title: "기상 & 준비" },
@@ -1107,7 +1220,6 @@ const DEFAULT_TEMPLATE = {
   ]
 };
 
-// 초기 체크 대상 자동 생성 (핵심 루틴만 기본 ON, 이후 사용자가 자유롭게 ON/OFF)
 function buildInitialTrackedMap(tpl) {
   const map = {};
   Object.keys(tpl).forEach(day => {
@@ -1121,11 +1233,10 @@ function buildInitialTrackedMap(tpl) {
   return map;
 }
 
-// 상태 로드
 let state = {
   template: JSON.parse(localStorage.getItem('rt_template_v2')) || DEFAULT_TEMPLATE,
   trackedIds: JSON.parse(localStorage.getItem('rt_trackedIds_v2')) || null,
-  dailyLogs: JSON.parse(localStorage.getItem('rt_dailyLogs_v2')) || {}, // { "YYYY-MM-DD": { checked:{}, memos:{}, diary:"", sleepAt:"", wakeAt:"" } }
+  dailyLogs: JSON.parse(localStorage.getItem('rt_dailyLogs_v2')) || {},
   oneOffs: JSON.parse(localStorage.getItem('rt_oneOffs_v2')) || [],
   postits: JSON.parse(localStorage.getItem('rt_postits_v2')) || [],
   cutoffHour: parseInt(localStorage.getItem('rt_cutoff_v2') || '5', 10),
@@ -1172,6 +1283,7 @@ let selectedDate = getLogicalTodayStr();
 let calViewDate = parseDateStr(selectedDate);
 let isEditMode = false;
 let openMemoId = null;
+let editingPostitId = null;
 
 function toLogicalMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
@@ -1221,7 +1333,6 @@ function ensureDayLog(dateStr) {
   return state.dailyLogs[dateStr];
 }
 
-// 수면 시간 계산 유틸
 function calcSleepDuration(sleepAt, wakeAt) {
   if (!sleepAt || !wakeAt) return '';
   const [sh, sm] = sleepAt.split(':').map(Number);
@@ -1233,7 +1344,6 @@ function calcSleepDuration(sleepAt, wakeAt) {
   return `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
 }
 
-// 원터치 취침 / 기상 기록
 function recordSleepNow() {
   const log = ensureDayLog(selectedDate);
   log.sleepAt = getNowHHMM();
@@ -1246,7 +1356,6 @@ function recordWakeNow() {
   const prevLog = state.dailyLogs[prevStr];
   const curLog = ensureDayLog(selectedDate);
 
-  // 어젯밤 취침 기록이 있고 기상 기록이 비어있다면 어젯밤 수면과 자동 매칭
   if (prevLog && prevLog.sleepAt && !prevLog.wakeAt) {
     prevLog.wakeAt = nowStr;
   } else {
@@ -1256,7 +1365,6 @@ function recordWakeNow() {
   render();
 }
 
-// 수면 시간 수동 수정 모달
 let editingSleepTargetDate = null;
 function openSleepEditModal(targetDate) {
   editingSleepTargetDate = targetDate;
@@ -1283,7 +1391,6 @@ function clearSleepManual() {
   render();
 }
 
-// 편집 모드 토글
 function toggleEditMode() {
   isEditMode = !isEditMode;
   const btn = document.getElementById('edit-mode-btn');
@@ -1296,7 +1403,6 @@ function toggleEditMode() {
 function toggleTrackedItem(day, idx, id, title) {
   const nextVal = !state.trackedIds[id];
   if (nextVal) {
-    // 같은 이름의 루틴이 다른 요일에도 있으면 일괄 적용 여부 확인
     let sameCount = 0;
     Object.keys(state.template).forEach(d => {
       state.template[d].forEach(it => { if (it.title === title) sameCount++; });
@@ -1317,7 +1423,6 @@ function toggleTrackedItem(day, idx, id, title) {
   render();
 }
 
-// 메인 렌더링
 function render() {
   const todayStr = getLogicalTodayStr();
   const isToday = (selectedDate === todayStr);
@@ -1325,15 +1430,16 @@ function render() {
   const dowKr = DAYS_KR[dObj.getDay()];
   const dowShort = DAYS_SHORT[dObj.getDay()];
 
-  document.getElementById('header-date-text').innerHTML =
-    `${selectedDate.replace(/-/g, '.')} (${dowShort})` +
-    (isToday ? `<span class="today-badge">오늘</span>` : '');
+  // 26.11.25(수) 압축 포맷 + 오늘 날짜 하이라이트 블록 적용
+  const shortDateText = `${selectedDate.slice(2).replace(/-/g, '.')}(${dowShort})`;
+  const headerDateEl = document.getElementById('header-date-text');
+  headerDateEl.textContent = shortDateText;
+  headerDateEl.classList.toggle('is-today', isToday);
 
   const dayLog = ensureDayLog(selectedDate);
   const prevStr = getPrevDateStr(selectedDate);
   const prevLog = state.dailyLogs[prevStr];
 
-  // 수면 배너 표시 (어젯밤 수면 결과 + 오늘 밤 취침 기록)
   const sleepBannerEl = document.getElementById('sleep-banner');
   let lastNightHtml = '어젯밤 수면: 미기록';
   if (prevLog && (prevLog.sleepAt || prevLog.wakeAt)) {
@@ -1343,7 +1449,6 @@ function render() {
   let tonightHtml = `오늘 취침: <span class="sleep-time-link" onclick="openSleepEditModal('${selectedDate}')">${dayLog.sleepAt || '미기록'}</span>`;
   sleepBannerEl.innerHTML = `<span>${lastNightHtml}</span><span>${tonightHtml}</span>`;
 
-  // 고정 루틴 + 일회성 시간 일정 병합
   const baseChunks = (state.template[dowKr] || []).map((item, idx) => ({
     ...item,
     isOneOff: false,
@@ -1375,7 +1480,6 @@ function render() {
     let endM = toLogicalMinutes(item.end);
     if (endM <= startM) endM += 1440;
 
-    // 이전 일정과 빈 시간 간격(Gap)이 있으면 1:1 비율의 빈 블록 삽입
     if (!item.isOneOff && prevEndM !== null && startM > prevEndM) {
       const gapSlots = (startM - prevEndM) / 30;
       const gapH = Math.max(28, Math.round(gapSlots * SLOT_HEIGHT));
@@ -1389,7 +1493,7 @@ function render() {
 
     const durationM = endM - startM;
     const slotCount = Math.max(1, Math.round(durationM / 30));
-    const cardHeight = slotCount * SLOT_HEIGHT; // 엄격한 1:1 시간 비례 높이
+    const cardHeight = slotCount * SLOT_HEIGHT;
 
     const durText = durationM >= 60
       ? (durationM % 60 === 0 ? `${durationM / 60}시간` : `${Math.floor(durationM / 60)}시간 ${durationM % 60}분`)
@@ -1406,7 +1510,6 @@ function render() {
       if (isChecked) totalDone++;
     }
 
-    // 왼쪽 30분 눈금 세그먼트 생성
     let ticksHtml = '<div class="slot-ticks">';
     for (let s = 0; s < slotCount; s++) ticksHtml += '<div class="slot-tick-seg"></div>';
     ticksHtml += '</div>';
@@ -1456,7 +1559,6 @@ function render() {
       <div class="chunk-actions">${actionHtml}</div>
     `;
 
-    // 한 줄 세부 메모 입력칸
     const memoBox = document.createElement('div');
     memoBox.className = 'inline-memo-box' + (openMemoId === item.id ? ' open' : '');
     memoBox.innerHTML = `
@@ -1471,7 +1573,6 @@ function render() {
     listEl.appendChild(wrap);
   });
 
-  // 상단 달성률 및 포스트잇 요약
   const pct = totalTrackable > 0 ? Math.round((totalDone / totalTrackable) * 100) : 0;
   document.getElementById('rate-text').textContent = `루틴 ${pct}% (${totalDone}/${totalTrackable})`;
   document.getElementById('rate-bar').style.width = `${pct}%`;
@@ -1481,7 +1582,6 @@ function render() {
   document.getElementById('postit-badge').textContent = uncompletedPostits;
   document.getElementById('done-postit-summary').textContent = `해치운 일 ${completedTodayPostits}건`;
 
-  // 일기 바인딩
   const diaryEl = document.getElementById('diary-textarea');
   diaryEl.value = dayLog.diary || '';
   document.getElementById('diary-save-msg').textContent = dayLog.diary ? '저장됨' : '';
@@ -1540,7 +1640,7 @@ function goToday() {
   render();
 }
 
-// 30분 단위 드럼 스크롤 휠 초기화 & 제어
+// 30분 단위 드럼 스크롤 휠
 function buildWheelPicker(boxId, defaultVal, onSelectCallback) {
   const box = document.getElementById(boxId);
   box.innerHTML = `<div class="wheel-pad"></div>` +
@@ -1584,8 +1684,7 @@ function openOneOffModal() {
   openModal('oneoff-modal');
   buildWheelPicker('oneoff-start-wheel', '14:00', (val, idx) => {
     const nextIdx = Math.min(TIME_OPTIONS_30M.length - 1, idx + 1);
-    const endBox = document.getElementById('oneoff-end-wheel');
-    endBox.scrollTo({ top: nextIdx * 44, behavior: 'smooth' });
+    document.getElementById('oneoff-end-wheel').scrollTo({ top: nextIdx * 44, behavior: 'smooth' });
   });
   buildWheelPicker('oneoff-end-wheel', '15:00', null);
 }
@@ -1608,7 +1707,7 @@ function deleteOneOff(id) {
   render();
 }
 
-// 고정 일정 폰 내 수정/추가 모달
+// 고정 일정 수정/추가 모달
 let editingFixedIdx = -1;
 function openFixedEditModal(idx) {
   editingFixedIdx = idx;
@@ -1674,7 +1773,7 @@ function deleteFixedItem() {
   render();
 }
 
-// 포스트잇 모달
+// 포스트잇 모달 (줄바꿈 유지 + 카드 수정 기능)
 function renderPostits() {
   const container = document.getElementById('postit-list');
   container.innerHTML = '';
@@ -1682,34 +1781,81 @@ function renderPostits() {
   visible.sort((a, b) => (a.completedDate ? 1 : 0) - (b.completedDate ? 1 : 0));
 
   if (visible.length === 0) {
-    container.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:0.84rem; padding:20px 0;">남아있는 포스트잇 메모가 없습니다.</p>`;
+    container.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:0.86rem; padding:26px 0;">남아있는 포스트잇 메모가 없습니다.</p>`;
     return;
   }
   visible.forEach(p => {
     const isDone = !!p.completedDate;
+    const isEditing = (editingPostitId === p.id);
     const div = document.createElement('div');
     div.className = 'postit-item' + (isDone ? ' done' : '');
-    div.innerHTML = `
-      <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer;">
-        <input type="checkbox" class="postit-check" ${isDone ? 'checked' : ''} onchange="togglePostit('${p.id}')">
-        <span>${escapeHtml(p.text)}</span>
-      </label>
-      <button onclick="deletePostit('${p.id}')" style="background:none; border:none; cursor:pointer; font-size:0.9rem;">✕</button>
-    `;
+
+    if (isEditing) {
+      div.innerHTML = `
+        <div style="flex:1; min-width:0;">
+          <textarea id="postit-edit-ta-${p.id}" class="postit-edit-area" rows="3">${escapeHtml(p.text)}</textarea>
+          <div class="postit-edit-footer">
+            <button class="postit-cancel-btn" onclick="cancelEditPostit()">취소</button>
+            <button class="postit-save-btn" onclick="saveEditPostit('${p.id}')">저장</button>
+          </div>
+        </div>
+      `;
+    } else {
+      div.innerHTML = `
+        <label class="postit-left">
+          <input type="checkbox" class="postit-check" ${isDone ? 'checked' : ''} onchange="togglePostit('${p.id}')">
+          <div class="postit-text-body">${escapeHtml(p.text)}</div>
+        </label>
+        <div class="postit-item-actions">
+          <button class="postit-action-btn" title="수정" onclick="startEditPostit('${p.id}')">✏️</button>
+          <button class="postit-action-btn" title="삭제" onclick="deletePostit('${p.id}')">✕</button>
+        </div>
+      `;
+    }
     container.appendChild(div);
   });
 }
+
 function addPostit() {
   const input = document.getElementById('postit-input');
   const text = input.value.trim();
   if (!text) return;
+  editingPostitId = null;
   state.postits.unshift({ id: 'p_' + Date.now(), text, completedDate: null });
   input.value = '';
   saveState();
   renderPostits();
   render();
 }
+function startEditPostit(id) {
+  editingPostitId = id;
+  renderPostits();
+  setTimeout(() => {
+    const ta = document.getElementById(`postit-edit-ta-${id}`);
+    if (ta) {
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+  }, 20);
+}
+function cancelEditPostit() {
+  editingPostitId = null;
+  renderPostits();
+}
+function saveEditPostit(id) {
+  const ta = document.getElementById(`postit-edit-ta-${id}`);
+  if (!ta) return;
+  const newText = ta.value.trim();
+  if (!newText) return alert('내용을 비워둘 수 없습니다.');
+  const item = state.postits.find(p => p.id === id);
+  if (item) item.text = newText;
+  editingPostitId = null;
+  saveState();
+  renderPostits();
+  render();
+}
 function togglePostit(id) {
+  editingPostitId = null;
   const item = state.postits.find(p => p.id === id);
   if (!item) return;
   item.completedDate = item.completedDate ? null : selectedDate;
@@ -1718,6 +1864,7 @@ function togglePostit(id) {
   render();
 }
 function deletePostit(id) {
+  if (editingPostitId === id) editingPostitId = null;
   state.postits = state.postits.filter(p => p.id !== id);
   saveState();
   renderPostits();
@@ -1777,7 +1924,7 @@ function shiftCalMonth(delta) {
   renderCalendar();
 }
 
-// 엑셀 TSV 파싱 (수면 제외 + 청크 병합)
+// 엑셀 TSV 파싱
 function parseTSV(raw) {
   const rows = [];
   let row = [], cell = '', inQuotes = false;
@@ -1833,7 +1980,6 @@ function importExcelTSV() {
       const end = match[2].padStart(5, '0');
       const cellText = (rows[r][colIdx] || '').trim();
 
-      // 수면 블록은 타임라인에서 제외
       if (/^수면$|일정 종료 후 수면/.test(cellText)) continue;
 
       if (chunks.length > 0 && (cellText === '' || cellText === chunks[chunks.length - 1].title)) {
@@ -1912,7 +2058,10 @@ function importBackup(e) {
 
 // 모달 제어
 function openModal(id) {
-  if (id === 'postit-modal') renderPostits();
+  if (id === 'postit-modal') {
+    editingPostitId = null;
+    renderPostits();
+  }
   if (id === 'calendar-modal') {
     calViewDate = parseDateStr(selectedDate);
     renderCalendar();
@@ -1925,6 +2074,7 @@ function openModal(id) {
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id) {
+  if (id === 'postit-modal') editingPostitId = null;
   document.getElementById(id).classList.remove('open');
 }
 function closeModalOnBg(e, id) {
@@ -1938,7 +2088,6 @@ function escapeJs(str) {
   return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-// 초기 실행
 initVisionSplash();
 render();
 setInterval(render, 60000);
