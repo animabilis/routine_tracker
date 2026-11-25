@@ -21,7 +21,7 @@
     --success: #10b981;
     --postit: #fef08a;
     --postit-text: #1e293b;
-    --slot-h: 44px; /* 30분당 기준 높이 */
+    --slot-h: 44px;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -75,7 +75,7 @@
     color: var(--text-muted);
   }
 
-  /* 상단 고정 헤더 (모바일 가로 최적화) */
+  /* 상단 고정 헤더 */
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -115,14 +115,12 @@
     border: 1px solid transparent;
     transition: background 0.2s, border-color 0.2s;
   }
-  /* 오늘 날짜 하이라이트 블록 */
   .date-title.is-today {
     background: var(--primary-soft);
     border-color: rgba(59, 130, 246, 0.65);
     color: #93c5fd;
   }
 
-  /* 우측 액션 버튼 영역: 좁은 화면에서 좌우 스크롤 가능 */
   .header-actions {
     display: flex;
     align-items: center;
@@ -169,12 +167,49 @@
     border-radius: 99px;
   }
 
+  /* 카테고리 필터 바 (상단 고정 영역 내 컴팩트 가로 스크롤) */
+  .cat-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 7px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cat-bar::-webkit-scrollbar { display: none; }
+  .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .cat-chip.on {
+    color: #fff;
+    background: var(--surface-2);
+  }
+  .cat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
   /* 요약 및 수면 상태 바 */
   .summary-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 7px;
+    margin-top: 6px;
     font-size: 0.78rem;
     color: var(--text-muted);
     gap: 8px;
@@ -211,7 +246,7 @@
     font-weight: 600;
   }
 
-  /* 메인 타임라인 스크롤 영역 */
+  /* 메인 타임라인 & 목록 스크롤 영역 */
   main {
     flex: 1;
     overflow-y: auto;
@@ -232,10 +267,35 @@
     gap: 8px;
   }
 
-  /* 1:1 비례 청크 카드 */
-  .chunk-wrapper {
-    margin-bottom: 5px;
+  /* 목록형 전용 2단 필터 바 */
+  .list-filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
   }
+  .list-filter-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .list-filter-btn.active {
+    background: var(--surface-2);
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* 1:1 비례 청크 카드 및 목록형 카드 */
+  .chunk-wrapper { margin-bottom: 5px; }
   .chunk-card {
     position: relative;
     background: var(--surface);
@@ -249,6 +309,33 @@
     transition: opacity 0.2s, border-color 0.2s;
     overflow: hidden;
   }
+  .chunk-card.list-compact {
+    min-height: auto !important;
+    padding: 8px 11px 8px 14px;
+  }
+  .chunk-card.list-compact.completed {
+    opacity: 0.48;
+    background: rgba(15, 23, 42, 0.65);
+  }
+
+  /* 카테고리 OFF 시 시간표 마스킹 상태 (공간은 채워두되 내용 가림) */
+  .chunk-card.masked {
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(15, 23, 42, 0.75),
+      rgba(15, 23, 42, 0.75) 8px,
+      rgba(30, 41, 59, 0.55) 8px,
+      rgba(30, 41, 59, 0.55) 16px
+    );
+    border: 1px dashed #334155;
+    opacity: 0.55;
+  }
+  .chunk-card.masked .chunk-title {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
   .slot-ticks {
     position: absolute;
     left: 0;
@@ -260,13 +347,9 @@
   }
   .slot-tick-seg {
     flex: 1;
-    background: #475569;
     border-bottom: 1px solid var(--bg);
   }
   .slot-tick-seg:last-child { border-bottom: none; }
-  .chunk-card.is-tracked .slot-tick-seg { background: var(--primary); }
-  .chunk-card.one-off .slot-tick-seg { background: var(--accent); }
-  .chunk-card.completed .slot-tick-seg { background: var(--success); }
 
   .chunk-card.tall {
     align-items: flex-start;
@@ -351,7 +434,7 @@
   .chunk-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
   }
   .check-circle {
@@ -503,7 +586,6 @@
     overflow-y: auto;
     border-top: 1px solid var(--border);
   }
-  /* 포스트잇 모달은 키보드 올라올 때 가려지지 않도록 상단 정렬 및 여유 높이 부여 */
   #postit-modal {
     align-items: flex-start;
     padding: 18px 10px 10px;
@@ -587,7 +669,7 @@
     font-size: 1.08rem;
   }
 
-  /* 포스트잇 모달 (여러 줄 입력 & 여유로운 카드 & 수정 기능) */
+  /* 포스트잇 모달 */
   .postit-compose-box {
     display: flex;
     gap: 8px;
@@ -605,7 +687,7 @@
     line-height: 1.45;
     font-family: inherit;
     resize: vertical;
-    min-height: 76px; /* 기본 3줄 높이 확보 */
+    min-height: 76px;
   }
   .postit-compose-box textarea:focus {
     outline: none;
@@ -790,6 +872,14 @@
     cursor: pointer;
     margin-top: 6px;
   }
+
+  /* 설정 내 카테고리 관리 리스트 */
+  .cat-manage-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
 </style>
 </head>
 <body>
@@ -810,6 +900,7 @@
       <button onclick="shiftDate(1)">▶</button>
     </div>
     <div class="header-actions">
+      <button class="icon-btn" id="view-mode-btn" onclick="toggleViewMode()">📋 목록보기</button>
       <button class="icon-btn" id="edit-mode-btn" onclick="toggleEditMode()">☑️ 체크선택</button>
       <button class="icon-btn postit-btn" onclick="openModal('postit-modal')">
         📝 <span class="badge-count" id="postit-badge">0</span>
@@ -818,6 +909,10 @@
       <button class="icon-btn" onclick="openModal('settings-modal')">⚙️</button>
     </div>
   </div>
+
+  <!-- 카테고리(유형) ON/OFF 필터 바 -->
+  <div class="cat-bar" id="cat-filter-bar"></div>
+
   <div class="summary-bar">
     <span id="rate-text">루틴 0% (0/0)</span>
     <div class="progress-wrap"><div class="progress-fill" id="rate-bar"></div></div>
@@ -826,8 +921,13 @@
   <div class="sleep-banner" id="sleep-banner"></div>
 </header>
 
-<!-- 중앙 메인 타임라인 -->
+<!-- 중앙 메인 타임라인 / 목록 영역 -->
 <main id="timeline-scroll">
+  <div id="list-filter-bar" class="list-filter-bar" style="display:none;">
+    <button class="list-filter-btn active" id="filter-tracked-btn" onclick="setListFilter('tracked')">☑️ 체크 일정만</button>
+    <button class="list-filter-btn" id="filter-all-btn" onclick="setListFilter('all')">📑 전체 일정</button>
+  </div>
+
   <div id="edit-mode-banner" class="edit-mode-banner" style="display:none;">
     <span>체크박스를 달 항목을 켜거나 고정 일정을 수정하세요.</span>
     <button class="close-btn" style="background:var(--primary); border:none; color:#fff;" onclick="openFixedEditModal(-1)">+ 고정일정</button>
@@ -852,7 +952,7 @@
   <button class="fab-btn fab-diary" onclick="scrollToDiary()">✍️ 일기</button>
 </div>
 
-<!-- 1. 포스트잇 모달 (3줄 기본 높이 + 줄바꿈 + 수정 버튼) -->
+<!-- 1. 포스트잇 모달 -->
 <div class="modal-backdrop" id="postit-modal" onclick="closeModalOnBg(event, 'postit-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
@@ -867,16 +967,22 @@
   </div>
 </div>
 
-<!-- 2. 일회성 시간 일정 추가 모달 -->
+<!-- 2. 일회성 시간 일정 추가/수정 모달 -->
 <div class="modal-backdrop" id="oneoff-modal" onclick="closeModalOnBg(event, 'oneoff-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
-      <div class="modal-title">⚡ 일회성 시간 일정 추가</div>
+      <div class="modal-title" id="oneoff-modal-title">⚡ 일회성 시간 일정 추가</div>
       <button class="close-btn" onclick="closeModal('oneoff-modal')">닫기</button>
     </div>
-    <div class="form-group">
-      <label>날짜</label>
-      <input type="date" id="oneoff-date" class="form-control">
+    <div class="row-2">
+      <div class="form-group">
+        <label>날짜</label>
+        <input type="date" id="oneoff-date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>유형 (카테고리)</label>
+        <select id="oneoff-cat" class="form-control"></select>
+      </div>
     </div>
     <div class="wheel-picker-wrap">
       <div class="wheel-col">
@@ -898,7 +1004,7 @@
       <label>일정 내용</label>
       <input type="text" id="oneoff-title" class="form-control" placeholder="예: 치과 방문 / 택배 수령 / 긴급 작업">
     </div>
-    <button class="btn-full" onclick="saveOneOff()">일회성 일정 등록</button>
+    <button class="btn-full" onclick="saveOneOff()">일회성 일정 저장</button>
   </div>
 </div>
 
@@ -924,6 +1030,10 @@
           <div class="wheel-box" id="fixed-end-wheel"></div>
         </div>
       </div>
+    </div>
+    <div class="form-group">
+      <label>유형 (카테고리)</label>
+      <select id="fixed-edit-cat" class="form-control"></select>
     </div>
     <div class="form-group">
       <label>일정 제목</label>
@@ -983,12 +1093,23 @@
   </div>
 </div>
 
-<!-- 6. 설정 & 엑셀 붙여넣기 & 비전보드 모달 -->
+<!-- 6. 설정 & 카테고리 관리 & 엑셀 & 백업 모달 -->
 <div class="modal-backdrop" id="settings-modal" onclick="closeModalOnBg(event, 'settings-modal')">
   <div class="modal-sheet">
     <div class="modal-header">
       <div class="modal-title">⚙️ 설정 및 데이터 관리</div>
       <button class="close-btn" onclick="closeModal('settings-modal')">닫기</button>
+    </div>
+
+    <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
+      <label style="color:var(--text); font-weight:700;">🏷️ 일정 유형(카테고리) 관리</label>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 8px;">이름과 색상을 수정하거나 새 유형을 추가할 수 있습니다.</p>
+      <div id="cat-manage-list"></div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <input type="color" id="new-cat-color" value="#a855f7" style="width:42px; height:36px; border:none; background:none; cursor:pointer;">
+        <input type="text" id="new-cat-name" class="form-control" placeholder="새 유형 이름 (예: 운동/취미)">
+        <button class="close-btn" style="background:var(--primary); border:none; color:#fff; white-space:nowrap;" onclick="addCategory()">+ 추가</button>
+      </div>
     </div>
 
     <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
@@ -1029,7 +1150,7 @@
 
     <div class="form-group" style="border-bottom:1px solid var(--border); padding-bottom:14px;">
       <label style="color:var(--text); font-weight:700;">📊 엑셀 시간표 덮어쓰기 (복사 후 붙여넣기)</label>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 6px;">엑셀 표([시간대 ~ 일요일])를 복사해 붙여넣으면 연속된 시간은 청크로 합쳐지고, '수면' 칸은 자동으로 제외됩니다.</p>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 6px;">엑셀 표([시간대 ~ 일요일])를 복사해 붙여넣으면 연속된 시간은 청크로 합쳐지고, '수면' 칸은 자동으로 제외되며 유형이 자동 분류됩니다.</p>
       <textarea id="excel-paste-area" class="form-control" rows="4" placeholder="여기에 엑셀 표를 붙여넣으세요..."></textarea>
       <button class="btn-full" onclick="importExcelTSV()">시간표 적용하기</button>
     </div>
@@ -1052,6 +1173,20 @@ const DAYS_KR = ['일요일', '월요일', '화요일', '수요일', '목요일'
 const DAYS_SHORT = ['일', '월', '화', '수', '목', '금', '토'];
 const SLOT_HEIGHT = 44;
 
+const DEFAULT_CATEGORIES = [
+  { id: 'personal', name: '개인', color: '#3b82f6' },
+  { id: 'school', name: '학교', color: '#10b981' },
+  { id: 'church', name: '교회', color: '#f59e0b' },
+  { id: 'work', name: '업무', color: '#ec4899' }
+];
+
+function inferCategoryByTitle(title) {
+  if (/학교|수업|인강|전공|강의실/.test(title)) return 'school';
+  if (/예배|성경|성구|묵상|말씀/.test(title)) return 'church';
+  if (/밸리AI|딥워크|포폴|업무|회사|암기어플|만화/.test(title)) return 'work';
+  return 'personal';
+}
+
 const TIME_OPTIONS_30M = (() => {
   const arr = [];
   for (let m = 6 * 60; m <= 28 * 60 + 30; m += 30) {
@@ -1064,159 +1199,159 @@ const TIME_OPTIONS_30M = (() => {
 
 const DEFAULT_TEMPLATE = {
   "월요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "이동 (폰 교보앱 틈새독서)" },
-    { start: "08:00", end: "08:30", title: "이동 & 수업 준비" },
-    { start: "08:30", end: "09:00", title: "수업 준비 (틈새독서)" },
-    { start: "09:00", end: "12:00", title: "학교 수업" },
-    { start: "12:00", end: "12:30", title: "점심식사" },
-    { start: "12:30", end: "13:00", title: "점심식사 & 휴식" },
-    { start: "13:00", end: "14:00", title: "유동 검술" },
-    { start: "14:00", end: "14:30", title: "유동 검술 / 휴식" },
-    { start: "14:30", end: "15:30", title: "인강 1시간 컷" },
-    { start: "15:30", end: "16:00", title: "인강 복습 & 정리" },
-    { start: "16:00", end: "16:30", title: "성경교육 원고 작성" },
-    { start: "16:30", end: "17:00", title: "폰 교보앱 틈새독서" },
-    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식" },
-    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)" },
-    { start: "18:30", end: "19:00", title: "이동 (외출)" },
-    { start: "19:00", end: "21:00", title: "저녁 수업" },
-    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
-    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
-    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
-    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "이동 (폰 교보앱 틈새독서)", cat: "personal" },
+    { start: "08:00", end: "08:30", title: "이동 & 수업 준비", cat: "school" },
+    { start: "08:30", end: "09:00", title: "수업 준비 (틈새독서)", cat: "school" },
+    { start: "09:00", end: "12:00", title: "학교 수업", cat: "school" },
+    { start: "12:00", end: "12:30", title: "점심식사", cat: "personal" },
+    { start: "12:30", end: "13:00", title: "점심식사 & 휴식", cat: "personal" },
+    { start: "13:00", end: "14:00", title: "유동 검술", cat: "personal" },
+    { start: "14:00", end: "14:30", title: "유동 검술 / 휴식", cat: "personal" },
+    { start: "14:30", end: "15:30", title: "인강 1시간 컷", cat: "school" },
+    { start: "15:30", end: "16:00", title: "인강 복습 & 정리", cat: "school" },
+    { start: "16:00", end: "16:30", title: "성경교육 원고 작성", cat: "church" },
+    { start: "16:30", end: "17:00", title: "폰 교보앱 틈새독서", cat: "personal" },
+    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)", cat: "school" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)", cat: "school" },
+    { start: "19:00", end: "21:00", title: "저녁 수업", cat: "school" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)", cat: "personal" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)", cat: "personal" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식", cat: "personal" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)", cat: "church" }
   ],
   "화요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "묵상/기도" },
-    { start: "08:00", end: "10:00", title: "밸리AI 라이브 복습" },
-    { start: "10:00", end: "11:00", title: "학교공부 / 주간 버퍼" },
-    { start: "11:00", end: "11:30", title: "휴식 & 검술 이동" },
-    { start: "11:30", end: "12:30", title: "유동 검술" },
-    { start: "12:30", end: "13:00", title: "유동 검술 & 점심" },
-    { start: "13:00", end: "13:30", title: "점심식사" },
-    { start: "13:30", end: "14:00", title: "이동 (강의실)" },
-    { start: "14:00", end: "17:00", title: "학교 수업" },
-    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식" },
-    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)" },
-    { start: "18:30", end: "19:00", title: "이동 (외출)" },
-    { start: "19:00", end: "21:00", title: "저녁 수업" },
-    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
-    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
-    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
-    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "묵상/기도", cat: "church" },
+    { start: "08:00", end: "10:00", title: "밸리AI 라이브 복습", cat: "work" },
+    { start: "10:00", end: "11:00", title: "학교공부 / 주간 버퍼", cat: "school" },
+    { start: "11:00", end: "11:30", title: "휴식 & 검술 이동", cat: "personal" },
+    { start: "11:30", end: "12:30", title: "유동 검술", cat: "personal" },
+    { start: "12:30", end: "13:00", title: "유동 검술 & 점심", cat: "personal" },
+    { start: "13:00", end: "13:30", title: "점심식사", cat: "personal" },
+    { start: "13:30", end: "14:00", title: "이동 (강의실)", cat: "school" },
+    { start: "14:00", end: "17:00", title: "학교 수업", cat: "school" },
+    { start: "17:00", end: "17:30", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "17:30", end: "18:30", title: "이동 준비 (18:30 출발)", cat: "school" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)", cat: "school" },
+    { start: "19:00", end: "21:00", title: "저녁 수업", cat: "school" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)", cat: "personal" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)", cat: "personal" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식", cat: "personal" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)", cat: "church" }
   ],
   "수요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "묵상/기도" },
-    { start: "08:00", end: "09:00", title: "인강 1시간 컷" },
-    { start: "09:00", end: "09:30", title: "인강 복습 & 정리" },
-    { start: "09:30", end: "10:00", title: "성경교육 스피킹 리허설" },
-    { start: "10:00", end: "10:30", title: "폰 교보앱 틈새독서" },
-    { start: "10:30", end: "11:00", title: "휴식 & 점심 이동" },
-    { start: "11:00", end: "11:30", title: "점심식사" },
-    { start: "11:30", end: "12:00", title: "점심식사 & 검술 이동" },
-    { start: "12:00", end: "13:00", title: "유동 검술" },
-    { start: "13:00", end: "13:30", title: "점심식사 & 이동" },
-    { start: "13:30", end: "14:00", title: "이동 (강의실)" },
-    { start: "14:00", end: "17:00", title: "학교 수업" },
-    { start: "17:00", end: "17:30", title: "이동 (예배당으로)" },
-    { start: "17:30", end: "18:00", title: "이동 (외출)" },
-    { start: "18:00", end: "21:00", title: "삼일예배" },
-    { start: "21:00", end: "21:30", title: "예배 종료 & 이동" },
-    { start: "21:30", end: "22:00", title: "이동? (귀가)?" },
-    { start: "22:00", end: "23:00", title: "공백 버퍼 (식사/정리/15m녹음/휴식/대기)" },
-    { start: "23:00", end: "23:30", title: "23:00 이후 일정 소화" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "묵상/기도", cat: "church" },
+    { start: "08:00", end: "09:00", title: "인강 1시간 컷", cat: "school" },
+    { start: "09:00", end: "09:30", title: "인강 복습 & 정리", cat: "school" },
+    { start: "09:30", end: "10:00", title: "성경교육 스피킹 리허설", cat: "church" },
+    { start: "10:00", end: "10:30", title: "폰 교보앱 틈새독서", cat: "personal" },
+    { start: "10:30", end: "11:00", title: "휴식 & 점심 이동", cat: "personal" },
+    { start: "11:00", end: "11:30", title: "점심식사", cat: "personal" },
+    { start: "11:30", end: "12:00", title: "점심식사 & 검술 이동", cat: "personal" },
+    { start: "12:00", end: "13:00", title: "유동 검술", cat: "personal" },
+    { start: "13:00", end: "13:30", title: "점심식사 & 이동", cat: "personal" },
+    { start: "13:30", end: "14:00", title: "이동 (강의실)", cat: "school" },
+    { start: "14:00", end: "17:00", title: "학교 수업", cat: "school" },
+    { start: "17:00", end: "17:30", title: "이동 (예배당으로)", cat: "church" },
+    { start: "17:30", end: "18:00", title: "이동 (외출)", cat: "church" },
+    { start: "18:00", end: "21:00", title: "삼일예배", cat: "church" },
+    { start: "21:00", end: "21:30", title: "예배 종료 & 이동", cat: "church" },
+    { start: "21:30", end: "22:00", title: "이동? (귀가)?", cat: "personal" },
+    { start: "22:00", end: "23:00", title: "공백 버퍼 (식사/정리/15m녹음/휴식/대기)", cat: "personal" },
+    { start: "23:00", end: "23:30", title: "23:00 이후 일정 소화", cat: "personal" }
   ],
   "목요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "휴식 & 틈새독서" },
-    { start: "08:00", end: "08:30", title: "이동 (폰 교보앱 틈새독서)" },
-    { start: "08:30", end: "09:00", title: "이동 & 수업 준비" },
-    { start: "09:00", end: "10:00", title: "수업 준비 (틈새독서)" },
-    { start: "10:00", end: "13:00", title: "학교 수업" },
-    { start: "13:00", end: "13:30", title: "점심식사" },
-    { start: "13:30", end: "14:00", title: "점심식사 & 휴식" },
-    { start: "14:00", end: "15:00", title: "유동 검술" },
-    { start: "15:00", end: "15:30", title: "유동 검술 / 휴식" },
-    { start: "15:30", end: "17:00", title: "밸리AI 공부/정리" },
-    { start: "17:00", end: "17:30", title: "촬영공부 이론 (30m)" },
-    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식" },
-    { start: "18:00", end: "18:30", title: "이동 준비 (18:30 출발)" },
-    { start: "18:30", end: "19:00", title: "이동 (외출)" },
-    { start: "19:00", end: "21:00", title: "저녁 수업" },
-    { start: "21:00", end: "22:00", title: "이동 (귀가)" },
-    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)" },
-    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식" },
-    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "휴식 & 틈새독서", cat: "personal" },
+    { start: "08:00", end: "08:30", title: "이동 (폰 교보앱 틈새독서)", cat: "personal" },
+    { start: "08:30", end: "09:00", title: "이동 & 수업 준비", cat: "school" },
+    { start: "09:00", end: "10:00", title: "수업 준비 (틈새독서)", cat: "school" },
+    { start: "10:00", end: "13:00", title: "학교 수업", cat: "school" },
+    { start: "13:00", end: "13:30", title: "점심식사", cat: "personal" },
+    { start: "13:30", end: "14:00", title: "점심식사 & 휴식", cat: "personal" },
+    { start: "14:00", end: "15:00", title: "유동 검술", cat: "personal" },
+    { start: "15:00", end: "15:30", title: "유동 검술 / 휴식", cat: "personal" },
+    { start: "15:30", end: "17:00", title: "밸리AI 공부/정리", cat: "work" },
+    { start: "17:00", end: "17:30", title: "촬영공부 이론 (30m)", cat: "work" },
+    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "18:00", end: "18:30", title: "이동 준비 (18:30 출발)", cat: "school" },
+    { start: "18:30", end: "19:00", title: "이동 (외출)", cat: "school" },
+    { start: "19:00", end: "21:00", title: "저녁 수업", cat: "school" },
+    { start: "21:00", end: "22:00", title: "이동 (귀가)", cat: "personal" },
+    { start: "22:00", end: "22:30", title: "귀가 회복 버퍼 (샤워/정리)", cat: "personal" },
+    { start: "22:30", end: "23:00", title: "이북리더기 독서 / 휴식", cat: "personal" },
+    { start: "23:00", end: "23:30", title: "성구복습 & 3줄일기(15m)", cat: "church" }
   ],
   "금요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 말씀정리 준비" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "11:30", title: "오전 말씀정리" },
-    { start: "11:30", end: "12:00", title: "휴식 & 점심식사" },
-    { start: "12:00", end: "12:30", title: "점심식사" },
-    { start: "12:30", end: "13:00", title: "휴식 & 작업 세팅" },
-    { start: "13:00", end: "15:00", title: "딥워크 A: 섬유공예 & 포폴기록" },
-    { start: "15:00", end: "15:30", title: "딥워크 A: 촬영실습/포폴정리" },
-    { start: "15:30", end: "16:00", title: "휴식 & 버퍼" },
-    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린공부/체력)" },
-    { start: "18:00", end: "18:30", title: "저녁식사" },
-    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식" },
-    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서" },
-    { start: "19:30", end: "22:00", title: "자유시간 / 취미" },
-    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)" },
-    { start: "22:30", end: "23:00", title: "취침 준비" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 말씀정리 준비", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "11:30", title: "오전 말씀정리", cat: "church" },
+    { start: "11:30", end: "12:00", title: "휴식 & 점심식사", cat: "personal" },
+    { start: "12:00", end: "12:30", title: "점심식사", cat: "personal" },
+    { start: "12:30", end: "13:00", title: "휴식 & 작업 세팅", cat: "work" },
+    { start: "13:00", end: "15:00", title: "딥워크 A: 섬유공예 & 포폴기록", cat: "work" },
+    { start: "15:00", end: "15:30", title: "딥워크 A: 촬영실습/포폴정리", cat: "work" },
+    { start: "15:30", end: "16:00", title: "휴식 & 버퍼", cat: "personal" },
+    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린공부/체력)", cat: "school" },
+    { start: "18:00", end: "18:30", title: "저녁식사", cat: "personal" },
+    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서", cat: "personal" },
+    { start: "19:30", end: "22:00", title: "자유시간 / 취미", cat: "personal" },
+    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)", cat: "church" },
+    { start: "22:30", end: "23:00", title: "취침 준비", cat: "personal" }
   ],
   "토요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "묵상/기도" },
-    { start: "08:00", end: "10:00", title: "딥워크 A: 암기어플 버그수정" },
-    { start: "10:00", end: "11:00", title: "휴식 & 자유시간" },
-    { start: "11:00", end: "12:00", title: "자유시간 / 유동일정" },
-    { start: "12:00", end: "12:30", title: "점심식사" },
-    { start: "12:30", end: "13:00", title: "점심식사 & 휴식" },
-    { start: "13:00", end: "15:00", title: "딥워크 B: 만화 작업" },
-    { start: "15:00", end: "16:00", title: "딥워크 B: 전공개발 계획" },
-    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린작업/체력)" },
-    { start: "18:00", end: "18:30", title: "저녁식사" },
-    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식" },
-    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서" },
-    { start: "19:30", end: "22:00", title: "자유시간 / 취미" },
-    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)" },
-    { start: "22:30", end: "23:00", title: "취침 준비" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 성구암기", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "묵상/기도", cat: "church" },
+    { start: "08:00", end: "10:00", title: "딥워크 A: 암기어플 버그수정", cat: "work" },
+    { start: "10:00", end: "11:00", title: "휴식 & 자유시간", cat: "personal" },
+    { start: "11:00", end: "12:00", title: "자유시간 / 유동일정", cat: "personal" },
+    { start: "12:00", end: "12:30", title: "점심식사", cat: "personal" },
+    { start: "12:30", end: "13:00", title: "점심식사 & 휴식", cat: "personal" },
+    { start: "13:00", end: "15:00", title: "딥워크 B: 만화 작업", cat: "work" },
+    { start: "15:00", end: "16:00", title: "딥워크 B: 전공개발 계획", cat: "school" },
+    { start: "16:00", end: "18:00", title: "주간 총괄 버퍼 (밀린작업/체력)", cat: "work" },
+    { start: "18:00", end: "18:30", title: "저녁식사", cat: "personal" },
+    { start: "18:30", end: "19:00", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "19:00", end: "19:30", title: "이북리더기 진득한 독서", cat: "personal" },
+    { start: "19:30", end: "22:00", title: "자유시간 / 취미", cat: "personal" },
+    { start: "22:00", end: "22:30", title: "성구복습 & 3줄일기(15m)", cat: "church" },
+    { start: "22:30", end: "23:00", title: "취침 준비", cat: "personal" }
   ],
   "일요일": [
-    { start: "06:00", end: "06:30", title: "기상 & 준비" },
-    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 예배 준비" },
-    { start: "07:00", end: "07:30", title: "아침식사 & 준비" },
-    { start: "07:30", end: "08:00", title: "예배 준비" },
-    { start: "08:00", end: "08:30", title: "이동 (외출)" },
-    { start: "08:30", end: "09:00", title: "주일 예배 준비" },
-    { start: "09:00", end: "11:00", title: "주일 예배" },
-    { start: "11:00", end: "12:00", title: "예배 후 교제/식사" },
-    { start: "12:00", end: "14:00", title: "주일 오후 일정" },
-    { start: "14:00", end: "16:30", title: "자유시간 / 이북리더기 독서" },
-    { start: "16:30", end: "17:00", title: "자유시간 / 휴식" },
-    { start: "17:00", end: "17:30", title: "저녁식사" },
-    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식" },
-    { start: "18:00", end: "18:30", title: "귀가 & 정리" },
-    { start: "18:30", end: "20:00", title: "주간 리셋 버퍼 (다음주 세팅)" },
-    { start: "20:00", end: "21:00", title: "자유시간 / 휴식" },
-    { start: "21:00", end: "21:30", title: "수면 준비" },
-    { start: "21:30", end: "22:00", title: "성구복습 & 3줄일기(15m)" },
-    { start: "22:00", end: "22:30", title: "취침 준비" }
+    { start: "06:00", end: "06:30", title: "기상 & 준비", cat: "personal" },
+    { start: "06:30", end: "07:00", title: "서브맥시멀(5m) & 예배 준비", cat: "church" },
+    { start: "07:00", end: "07:30", title: "아침식사 & 준비", cat: "personal" },
+    { start: "07:30", end: "08:00", title: "예배 준비", cat: "church" },
+    { start: "08:00", end: "08:30", title: "이동 (외출)", cat: "church" },
+    { start: "08:30", end: "09:00", title: "주일 예배 준비", cat: "church" },
+    { start: "09:00", end: "11:00", title: "주일 예배", cat: "church" },
+    { start: "11:00", end: "12:00", title: "예배 후 교제/식사", cat: "church" },
+    { start: "12:00", end: "14:00", title: "주일 오후 일정", cat: "church" },
+    { start: "14:00", end: "16:30", title: "자유시간 / 이북리더기 독서", cat: "personal" },
+    { start: "16:30", end: "17:00", title: "자유시간 / 휴식", cat: "personal" },
+    { start: "17:00", end: "17:30", title: "저녁식사", cat: "personal" },
+    { start: "17:30", end: "18:00", title: "저녁식사 & 휴식", cat: "personal" },
+    { start: "18:00", end: "18:30", title: "귀가 & 정리", cat: "personal" },
+    { start: "18:30", end: "20:00", title: "주간 리셋 버퍼 (다음주 세팅)", cat: "personal" },
+    { start: "20:00", end: "21:00", title: "자유시간 / 휴식", cat: "personal" },
+    { start: "21:00", end: "21:30", title: "수면 준비", cat: "personal" },
+    { start: "21:30", end: "22:00", title: "성구복습 & 3줄일기(15m)", cat: "church" },
+    { start: "22:00", end: "22:30", title: "취침 준비", cat: "personal" }
   ]
 };
 
@@ -1240,11 +1375,24 @@ let state = {
   oneOffs: JSON.parse(localStorage.getItem('rt_oneOffs_v2')) || [],
   postits: JSON.parse(localStorage.getItem('rt_postits_v2')) || [],
   cutoffHour: parseInt(localStorage.getItem('rt_cutoff_v2') || '5', 10),
-  vision: JSON.parse(localStorage.getItem('rt_vision_v2')) || { sec: 3, text: "오늘의 작은 실행이 쌓여\n원하는 미래를 만든다.", img: "" }
+  vision: JSON.parse(localStorage.getItem('rt_vision_v2')) || { sec: 3, text: "오늘의 작은 실행이 쌓여\n원하는 미래를 만든다.", img: "" },
+  categories: JSON.parse(localStorage.getItem('rt_categories_v2')) || DEFAULT_CATEGORIES,
+  disabledCats: JSON.parse(localStorage.getItem('rt_disabledCats_v2')) || {}
 };
 
+// 기존 데이터 마이그레이션: cat 누락 항목 자동 분류
+let migrated = false;
+Object.keys(state.template).forEach(day => {
+  state.template[day].forEach(it => {
+    if (!it.cat) { it.cat = inferCategoryByTitle(it.title); migrated = true; }
+  });
+});
+state.oneOffs.forEach(o => {
+  if (!o.cat) { o.cat = inferCategoryByTitle(o.title); migrated = true; }
+});
 if (!state.trackedIds) {
   state.trackedIds = buildInitialTrackedMap(state.template);
+  migrated = true;
 }
 
 function saveState() {
@@ -1255,6 +1403,16 @@ function saveState() {
   localStorage.setItem('rt_postits_v2', JSON.stringify(state.postits));
   localStorage.setItem('rt_cutoff_v2', String(state.cutoffHour));
   localStorage.setItem('rt_vision_v2', JSON.stringify(state.vision));
+  localStorage.setItem('rt_categories_v2', JSON.stringify(state.categories));
+  localStorage.setItem('rt_disabledCats_v2', JSON.stringify(state.disabledCats));
+}
+if (migrated) saveState();
+
+function getCategoryObj(catId) {
+  return state.categories.find(c => c.id === catId) || state.categories[0] || { id: 'personal', name: '개인', color: '#3b82f6' };
+}
+function isCatEnabled(catId) {
+  return !state.disabledCats[catId];
 }
 
 function getLogicalTodayStr() {
@@ -1284,6 +1442,56 @@ let calViewDate = parseDateStr(selectedDate);
 let isEditMode = false;
 let openMemoId = null;
 let editingPostitId = null;
+let viewMode = 'timeline'; // 'timeline' | 'list'
+let listFilter = 'tracked'; // 'tracked' | 'all'
+
+function toggleViewMode() {
+  viewMode = (viewMode === 'timeline') ? 'list' : 'timeline';
+  const btn = document.getElementById('view-mode-btn');
+  btn.classList.toggle('active-mode', viewMode === 'list');
+  btn.textContent = (viewMode === 'list') ? '🕒 시간표' : '📋 목록보기';
+  document.getElementById('list-filter-bar').style.display = (viewMode === 'list') ? 'grid' : 'none';
+  render();
+}
+
+function setListFilter(mode) {
+  listFilter = mode;
+  document.getElementById('filter-tracked-btn').classList.toggle('active', mode === 'tracked');
+  document.getElementById('filter-all-btn').classList.toggle('active', mode === 'all');
+  render();
+}
+
+function toggleCategoryFilter(catId) {
+  if (state.disabledCats[catId]) {
+    delete state.disabledCats[catId];
+  } else {
+    state.disabledCats[catId] = true;
+  }
+  saveState();
+  render();
+}
+
+function enableAllCategories() {
+  state.disabledCats = {};
+  saveState();
+  render();
+}
+
+function renderCategoryBar() {
+  const bar = document.getElementById('cat-filter-bar');
+  const anyDisabled = Object.keys(state.disabledCats).length > 0;
+  let html = `<button class="cat-chip ${!anyDisabled ? 'on' : ''}" onclick="enableAllCategories()" style="${!anyDisabled ? 'border-color:#94a3b8;' : ''}">전체</button>`;
+  state.categories.forEach(c => {
+    const enabled = isCatEnabled(c.id);
+    html += `
+      <button class="cat-chip ${enabled ? 'on' : ''}" onclick="toggleCategoryFilter('${c.id}')"
+        style="${enabled ? `border-color:${c.color};` : 'opacity:0.5;'}">
+        <span class="cat-dot" style="background:${c.color};"></span>${escapeHtml(c.name)}
+      </button>
+    `;
+  });
+  bar.innerHTML = html;
+}
 
 function toLogicalMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
@@ -1430,11 +1638,12 @@ function render() {
   const dowKr = DAYS_KR[dObj.getDay()];
   const dowShort = DAYS_SHORT[dObj.getDay()];
 
-  // 26.11.25(수) 압축 포맷 + 오늘 날짜 하이라이트 블록 적용
   const shortDateText = `${selectedDate.slice(2).replace(/-/g, '.')}(${dowShort})`;
   const headerDateEl = document.getElementById('header-date-text');
   headerDateEl.textContent = shortDateText;
   headerDateEl.classList.toggle('is-today', isToday);
+
+  renderCategoryBar();
 
   const dayLog = ensureDayLog(selectedDate);
   const prevStr = getPrevDateStr(selectedDate);
@@ -1451,6 +1660,7 @@ function render() {
 
   const baseChunks = (state.template[dowKr] || []).map((item, idx) => ({
     ...item,
+    cat: item.cat || 'personal',
     isOneOff: false,
     tplIdx: idx,
     id: `${dowKr}_${item.start}_${item.title}`
@@ -1458,7 +1668,7 @@ function render() {
 
   const dayOneOffs = state.oneOffs
     .filter(o => o.date === selectedDate)
-    .map(o => ({ ...o, isOneOff: true }));
+    .map(o => ({ ...o, cat: o.cat || 'personal', isOneOff: true }));
 
   const allItems = [...baseChunks, ...dayOneOffs].sort((a, b) => {
     const diff = toLogicalMinutes(a.start) - toLogicalMinutes(b.start);
@@ -1474,13 +1684,26 @@ function render() {
   let totalDone = 0;
   let currentCardEl = null;
   let prevEndM = null;
+  const isListView = (viewMode === 'list');
 
   allItems.forEach(item => {
     const startM = toLogicalMinutes(item.start);
     let endM = toLogicalMinutes(item.end);
     if (endM <= startM) endM += 1440;
 
-    if (!item.isOneOff && prevEndM !== null && startM > prevEndM) {
+    const catObj = getCategoryObj(item.cat);
+    const catActive = isCatEnabled(catObj.id);
+    const isTracked = item.isOneOff ? true : !!state.trackedIds[item.id];
+    const isChecked = item.isOneOff ? item.done : !!dayLog.checked[item.id];
+
+    // 활성화된 카테고리만 달성률 분모/분자에 포함
+    if (catActive && isTracked) {
+      totalTrackable++;
+      if (isChecked) totalDone++;
+    }
+
+    // 타임라인 모드에서는 빈 시간 계산을 위해 prevEndM 갱신 (꺼진 파트도 시간 점유 유지)
+    if (!isListView && !item.isOneOff && prevEndM !== null && startM > prevEndM) {
       const gapSlots = (startM - prevEndM) / 30;
       const gapH = Math.max(28, Math.round(gapSlots * SLOT_HEIGHT));
       const gapDiv = document.createElement('div');
@@ -1491,6 +1714,12 @@ function render() {
     }
     if (!item.isOneOff) prevEndM = endM;
 
+    // 목록형에서는 꺼진 카테고리 및 비체크 항목(필터 설정 시) 완전히 숨김
+    if (isListView) {
+      if (!catActive) return;
+      if (listFilter === 'tracked' && !isTracked) return;
+    }
+
     const durationM = endM - startM;
     const slotCount = Math.max(1, Math.round(durationM / 30));
     const cardHeight = slotCount * SLOT_HEIGHT;
@@ -1499,29 +1728,44 @@ function render() {
       ? (durationM % 60 === 0 ? `${durationM / 60}시간` : `${Math.floor(durationM / 60)}시간 ${durationM % 60}분`)
       : `${durationM}분`;
 
-    const isTracked = item.isOneOff ? true : !!state.trackedIds[item.id];
     const isPast = isToday && (nowMins >= endM);
     const isCurrent = isToday && (nowMins >= startM && nowMins < endM);
-    const isChecked = item.isOneOff ? item.done : !!dayLog.checked[item.id];
     const memoText = dayLog.memos[item.id] || '';
-
-    if (isTracked) {
-      totalTrackable++;
-      if (isChecked) totalDone++;
-    }
-
-    let ticksHtml = '<div class="slot-ticks">';
-    for (let s = 0; s < slotCount; s++) ticksHtml += '<div class="slot-tick-seg"></div>';
-    ticksHtml += '</div>';
 
     const wrap = document.createElement('div');
     wrap.className = 'chunk-wrapper';
 
+    // 타임라인 모드에서 꺼진 카테고리는 '마스킹(채워져 있으나 내용 가림)' 카드로 표시
+    if (!isListView && !catActive) {
+      const maskedCard = document.createElement('div');
+      maskedCard.style.minHeight = `${cardHeight}px`;
+      maskedCard.className = 'chunk-card masked' + (isPast ? ' past' : '');
+      maskedCard.innerHTML = `
+        <div class="chunk-info" style="cursor:default;">
+          <div class="chunk-time">
+            <span>${item.start}~${item.end}</span>
+            <span class="tag-pill tag-duration">${durText}</span>
+          </div>
+          <div class="chunk-title">🔒 비활성 영역 (${escapeHtml(catObj.name)})</div>
+        </div>
+      `;
+      wrap.appendChild(maskedCard);
+      listEl.appendChild(wrap);
+      return;
+    }
+
+    const tickColor = (isChecked && isTracked) ? 'var(--success)' : catObj.color;
+    let ticksHtml = '<div class="slot-ticks">';
+    for (let s = 0; s < slotCount; s++) {
+      ticksHtml += `<div class="slot-tick-seg" style="background:${tickColor};"></div>`;
+    }
+    ticksHtml += '</div>';
+
     const card = document.createElement('div');
-    card.style.minHeight = `${cardHeight}px`;
+    if (!isListView) card.style.minHeight = `${cardHeight}px`;
     card.className = 'chunk-card' +
-      (slotCount >= 2 ? ' tall' : '') +
-      (isPast ? ' past' : '') +
+      (isListView ? ' list-compact' : (slotCount >= 2 ? ' tall' : '')) +
+      (!isListView && isPast ? ' past' : '') +
       (isCurrent ? ' current' : '') +
       (item.isOneOff ? ' one-off' : '') +
       (isTracked ? ' is-tracked' : ' untracked') +
@@ -1537,6 +1781,15 @@ function render() {
         </button>
         <button class="mini-edit-btn" onclick="openFixedEditModal(${item.tplIdx})">수정</button>
       `;
+    } else if (isListView) {
+      const editCall = item.isOneOff
+        ? `openOneOffModal('${item.id}')`
+        : `openFixedEditModal(${item.tplIdx})`;
+      actionHtml = `
+        <button class="mini-edit-btn" title="일정 수정" onclick="${editCall}">✏️</button>
+        ${item.isOneOff ? `<button class="mini-edit-btn" onclick="deleteOneOff('${item.id}')">🗑️</button>` : ''}
+        ${isTracked ? `<button class="check-circle ${isChecked ? 'checked' : ''}" onclick="toggleItemCheck('${item.id}', ${item.isOneOff})">${isChecked ? '✓' : ''}</button>` : ''}
+      `;
     } else {
       actionHtml = `
         ${item.isOneOff ? `<button class="mini-edit-btn" onclick="deleteOneOff('${item.id}')">🗑️</button>` : ''}
@@ -1549,6 +1802,7 @@ function render() {
       <div class="chunk-info" onclick="toggleMemoBox('${item.id}')">
         <div class="chunk-time">
           <span>${item.start}~${item.end}</span>
+          <span class="tag-pill" style="background:${catObj.color}26; color:${catObj.color};">${escapeHtml(catObj.name)}</span>
           <span class="tag-pill tag-duration">${durText}</span>
           ${item.isOneOff ? `<span class="tag-pill tag-oneoff">일회성</span>` : ''}
           ${isCurrent ? `<span class="tag-pill tag-now">진행 중</span>` : ''}
@@ -1572,6 +1826,10 @@ function render() {
     wrap.appendChild(memoBox);
     listEl.appendChild(wrap);
   });
+
+  if (isListView && listEl.children.length === 0) {
+    listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:0.86rem; padding:30px 0;">현재 선택된 조건에 해당하는 일정이 없습니다.</p>`;
+  }
 
   const pct = totalTrackable > 0 ? Math.round((totalDone / totalTrackable) * 100) : 0;
   document.getElementById('rate-text').textContent = `루틴 ${pct}% (${totalDone}/${totalTrackable})`;
@@ -1640,6 +1898,13 @@ function goToday() {
   render();
 }
 
+function populateCategorySelect(selectId, selectedCatId) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = state.categories.map(c =>
+    `<option value="${c.id}" ${c.id === selectedCatId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+  ).join('');
+}
+
 // 30분 단위 드럼 스크롤 휠
 function buildWheelPicker(boxId, defaultVal, onSelectCallback) {
   const box = document.getElementById(boxId);
@@ -1677,24 +1942,58 @@ function getWheelValue(boxId) {
   return TIME_OPTIONS_30M[activeIdx];
 }
 
-// 일회성 시간 일정 모달
-function openOneOffModal() {
-  document.getElementById('oneoff-date').value = selectedDate;
-  document.getElementById('oneoff-title').value = '';
+// 일회성 시간 일정 모달 (추가 및 수정 겸용)
+let editingOneOffId = null;
+function openOneOffModal(editId = null) {
+  editingOneOffId = editId;
+  const titleEl = document.getElementById('oneoff-modal-title');
+  let initDate = selectedDate, initStart = '14:00', initEnd = '15:00', initTitle = '', initCat = state.categories[0]?.id || 'personal';
+
+  if (editId) {
+    const target = state.oneOffs.find(o => o.id === editId);
+    if (target) {
+      titleEl.textContent = '⚡ 일회성 시간 일정 수정';
+      initDate = target.date;
+      initStart = target.start;
+      initEnd = target.end;
+      initTitle = target.title;
+      initCat = target.cat || initCat;
+    }
+  } else {
+    titleEl.textContent = '⚡ 일회성 시간 일정 추가';
+  }
+
+  document.getElementById('oneoff-date').value = initDate;
+  document.getElementById('oneoff-title').value = initTitle;
+  populateCategorySelect('oneoff-cat', initCat);
   openModal('oneoff-modal');
-  buildWheelPicker('oneoff-start-wheel', '14:00', (val, idx) => {
+  buildWheelPicker('oneoff-start-wheel', initStart, (val, idx) => {
     const nextIdx = Math.min(TIME_OPTIONS_30M.length - 1, idx + 1);
     document.getElementById('oneoff-end-wheel').scrollTo({ top: nextIdx * 44, behavior: 'smooth' });
   });
-  buildWheelPicker('oneoff-end-wheel', '15:00', null);
+  buildWheelPicker('oneoff-end-wheel', initEnd, null);
 }
 function saveOneOff() {
   const date = document.getElementById('oneoff-date').value;
+  const cat = document.getElementById('oneoff-cat').value;
   const start = getWheelValue('oneoff-start-wheel');
   const end = getWheelValue('oneoff-end-wheel');
   const title = document.getElementById('oneoff-title').value.trim();
   if (!date || !title) return alert('날짜와 일정 내용을 입력해 주세요.');
-  state.oneOffs.push({ id: 'o_' + Date.now(), date, start, end, title, done: false });
+
+  if (editingOneOffId) {
+    const target = state.oneOffs.find(o => o.id === editingOneOffId);
+    if (target) {
+      target.date = date;
+      target.cat = cat;
+      target.start = start;
+      target.end = end;
+      target.title = title;
+    }
+  } else {
+    state.oneOffs.push({ id: 'o_' + Date.now(), date, cat, start, end, title, done: false });
+  }
+  editingOneOffId = null;
   saveState();
   closeModal('oneoff-modal');
   selectedDate = date;
@@ -1715,12 +2014,13 @@ function openFixedEditModal(idx) {
   const list = state.template[dowKr] || [];
   const delBtn = document.getElementById('fixed-delete-btn');
 
-  let initStart = '12:00', initEnd = '13:00', initTitle = '';
+  let initStart = '12:00', initEnd = '13:00', initTitle = '', initCat = state.categories[0]?.id || 'personal';
   if (idx >= 0 && list[idx]) {
     document.getElementById('fixed-edit-modal-title').textContent = `${dowKr} 고정 일정 수정`;
     initStart = list[idx].start;
     initEnd = list[idx].end;
     initTitle = list[idx].title;
+    initCat = list[idx].cat || initCat;
     delBtn.style.display = 'block';
   } else {
     document.getElementById('fixed-edit-modal-title').textContent = `${dowKr} 새 고정 일정 추가`;
@@ -1728,6 +2028,7 @@ function openFixedEditModal(idx) {
   }
 
   document.getElementById('fixed-edit-title').value = initTitle;
+  populateCategorySelect('fixed-edit-cat', initCat);
   openModal('fixed-edit-modal');
   buildWheelPicker('fixed-start-wheel', initStart, (val, sIdx) => {
     const nextIdx = Math.min(TIME_OPTIONS_30M.length - 1, sIdx + 1);
@@ -1740,6 +2041,7 @@ function saveFixedEdit() {
   const dowKr = DAYS_KR[parseDateStr(selectedDate).getDay()];
   const start = getWheelValue('fixed-start-wheel');
   const end = getWheelValue('fixed-end-wheel');
+  const cat = document.getElementById('fixed-edit-cat').value;
   const title = document.getElementById('fixed-edit-title').value.trim();
   if (!title) return alert('일정 제목을 입력해 주세요.');
 
@@ -1752,9 +2054,9 @@ function saveFixedEdit() {
       delete state.trackedIds[oldId];
       state.trackedIds[newId] = true;
     }
-    state.template[dowKr][editingFixedIdx] = { start, end, title };
+    state.template[dowKr][editingFixedIdx] = { start, end, title, cat };
   } else {
-    state.template[dowKr].push({ start, end, title });
+    state.template[dowKr].push({ start, end, title, cat });
     state.trackedIds[`${dowKr}_${start}_${title}`] = true;
   }
   state.template[dowKr].sort((a, b) => toLogicalMinutes(a.start) - toLogicalMinutes(b.start));
@@ -1773,7 +2075,51 @@ function deleteFixedItem() {
   render();
 }
 
-// 포스트잇 모달 (줄바꿈 유지 + 카드 수정 기능)
+// 설정 내 카테고리 관리
+function renderCategoryManager() {
+  const container = document.getElementById('cat-manage-list');
+  container.innerHTML = state.categories.map((c, idx) => `
+    <div class="cat-manage-row">
+      <input type="color" value="${c.color}" onchange="updateCategory(${idx}, 'color', this.value)" style="width:36px; height:32px; border:none; background:none; cursor:pointer;">
+      <input type="text" class="form-control" style="padding:6px 8px; font-size:0.84rem;" value="${escapeHtml(c.name)}" onchange="updateCategory(${idx}, 'name', this.value)">
+      ${state.categories.length > 1 ? `<button class="close-btn" style="padding:5px 8px;" onclick="deleteCategory(${idx})">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+function updateCategory(idx, key, val) {
+  if (!val.trim()) return;
+  state.categories[idx][key] = val.trim();
+  saveState();
+  render();
+}
+function addCategory() {
+  const nameInput = document.getElementById('new-cat-name');
+  const colorInput = document.getElementById('new-cat-color');
+  const name = nameInput.value.trim();
+  if (!name) return alert('새 유형 이름을 입력해 주세요.');
+  state.categories.push({ id: 'cat_' + Date.now(), name, color: colorInput.value });
+  nameInput.value = '';
+  saveState();
+  renderCategoryManager();
+  render();
+}
+function deleteCategory(idx) {
+  if (state.categories.length <= 1) return;
+  const removed = state.categories[idx];
+  if (!confirm(`'${removed.name}' 유형을 삭제할까요?\n(해당 일정들은 첫 번째 유형으로 자동 이동됩니다)`)) return;
+  state.categories.splice(idx, 1);
+  const fallbackId = state.categories[0].id;
+  delete state.disabledCats[removed.id];
+  Object.keys(state.template).forEach(d => {
+    state.template[d].forEach(it => { if (it.cat === removed.id) it.cat = fallbackId; });
+  });
+  state.oneOffs.forEach(o => { if (o.cat === removed.id) o.cat = fallbackId; });
+  saveState();
+  renderCategoryManager();
+  render();
+}
+
+// 포스트잇 모달
 function renderPostits() {
   const container = document.getElementById('postit-list');
   container.innerHTML = '';
@@ -1985,7 +2331,7 @@ function importExcelTSV() {
       if (chunks.length > 0 && (cellText === '' || cellText === chunks[chunks.length - 1].title)) {
         chunks[chunks.length - 1].end = end;
       } else if (cellText !== '') {
-        chunks.push({ start, end, title: cellText });
+        chunks.push({ start, end, title: cellText, cat: inferCategoryByTitle(cellText) });
       }
     }
     newTemplate[day] = chunks;
@@ -2067,6 +2413,7 @@ function openModal(id) {
     renderCalendar();
   }
   if (id === 'settings-modal') {
+    renderCategoryManager();
     document.getElementById('vision-sec').value = String(state.vision.sec ?? 3);
     document.getElementById('vision-text').value = state.vision.text || '';
     document.getElementById('day-cutoff').value = String(state.cutoffHour);
